@@ -1,4 +1,4 @@
-/* Absolute Hear — usage hors ligne.
+/* First Note: Perfect Pitch — usage hors ligne.
    Le code de l'appli est toujours demandé au réseau d'abord (pour recevoir les mises à jour), avec repli sur la copie locale.
    Les sons (enregistrements, notes du piano) sont gardés dès leur première écoute. */
 const CACHE = "absolute-hear-1";

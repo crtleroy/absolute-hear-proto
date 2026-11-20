@@ -1,4 +1,4 @@
-/* Absolute Hear — prototype d'application.
+/* First Note: Perfect Pitch — prototype d'application.
    Données : data/pieces.js (window.PIECES, du plus connu au moins connu) et data/enregistrements.js (window.ENREGISTREMENTS). */
 (function () {
   "use strict";

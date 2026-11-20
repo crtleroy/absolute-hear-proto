@@ -1,4 +1,4 @@
-/* Absolute Hear — les éléments d'application autour du jeu : profil, série, statistiques, réglages, partage,
+/* First Note: Perfect Pitch — les éléments d'application autour du jeu : profil, série, statistiques, réglages, partage,
    premier lancement, installation. S'appuie sur window.AH, exposé par app.js. */
 (function () {
   "use strict";
@@ -95,7 +95,7 @@
   function offrePremium() {
     const v = volet(`
       <p class="surtitre">Premium</p>
-      <h2>Tout Absolute Hear, sans publicité</h2>
+      <h2>Tout First Note, sans publicité</h2>
       <ul class="atouts"><li>Aucune publicité</li><li>Tous les morceaux</li><li>Écoute hors ligne</li></ul>
       <div class="formules">
         <button class="formule" data-f="an"><b>Annuel</b><small>prix à définir</small><em>le plus choisi</em></button>
@@ -226,7 +226,7 @@
         <button class="ligne" data-texte="Mentions légales"><b>Mentions légales</b></button>
         <button class="ligne" id="credits"><b>Crédits des enregistrements</b></button>
         <button class="ligne danger" id="remise"><b>${cree ? "Supprimer mon compte et mes données" : "Recommencer à zéro"}</b></button>
-        <p class="version">Absolute Hear · prototype</p>
+        <p class="version">First Note: Perfect Pitch · prototype</p>
       </div>`;
     const sur = (id, fn) => { const el = $(id); if (el) el.addEventListener("click", fn); };
     document.querySelectorAll("#ecran-profil [data-bientot]").forEach((b) => b.addEventListener("click", () => AH.toast(b.dataset.bientot)));
@@ -262,7 +262,7 @@
     x.fillStyle = fond; x.fillRect(0, 0, L, H);
     const somme = Object.values(niv).reduce((a, n) => a + n, 0), pct = Math.round((100 * somme) / (88 * 5));
     x.textAlign = "center";
-    x.fillStyle = "#e9c27a"; x.font = "600 30px sans-serif"; x.fillText("A B S O L U T E   H E A R", L / 2, 150);
+    x.fillStyle = "#e9c27a"; x.font = "600 30px sans-serif"; x.fillText("F I R S T   N O T E", L / 2, 150);
     x.fillStyle = "#fff3d6"; x.font = "600 300px Georgia, serif"; x.fillText(pct + " %", L / 2, 560);
     x.fillStyle = "#a7a1b2"; x.font = "34px sans-serif"; x.fillText("O R E I L L E   A B S O L U E", L / 2, 640);
     const lb = (L - 80) / 52, y0 = 760, hb = lb * 6.4;
@@ -283,12 +283,12 @@
     x.fillStyle = "#f3efe6"; x.font = "600 60px Georgia, serif";
     x.fillText(`${Object.keys(niv).length} touches allumées · record ${S.record}`, L / 2, 1100);
     const blob = await new Promise((r) => c.toBlob(r, "image/png"));
-    const fichier = new File([blob], "absolute-hear.png", { type: "image/png" });
+    const fichier = new File([blob], "first-note.png", { type: "image/png" });
     try {
-      if (navigator.canShare && navigator.canShare({ files: [fichier] })) { await navigator.share({ files: [fichier], title: "Absolute Hear" }); return; }
+      if (navigator.canShare && navigator.canShare({ files: [fichier] })) { await navigator.share({ files: [fichier], title: "First Note: Perfect Pitch" }); return; }
     } catch (e) { if (e.name === "AbortError") return; }
     const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob); a.download = "absolute-hear.png"; a.click();
+    a.href = URL.createObjectURL(blob); a.download = "first-note.png"; a.click();
     AH.toast("Image enregistrée");
   }
 
