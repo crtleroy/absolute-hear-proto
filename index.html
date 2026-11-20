@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f0e14">
+<title>Absolute Hear</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=14">
+</head>
+<body>
+<div id="app">
+  <div class="ecrans">
+
+    <section id="ecran-jouer" class="ecran actif">
+      <div id="accueil" class="accueil">
+        <p class="surtitre">Absolute Hear</p>
+        <div class="jauge-oreille">
+          <p class="jauge-chiffre"><b id="acc-jauge">0</b><span>%</span></p>
+          <p class="jauge-nom">oreille absolue</p>
+          <div id="acc-clavier" class="grand-clavier" aria-hidden="true"></div>
+          <p id="acc-touches" class="jauge-touches"></p>
+        </div>
+        <div class="chiffres">
+          <div><b id="acc-points">0</b><small>points</small></div>
+          <div><b id="acc-liste">2</b><small>morceaux</small></div>
+          <div><b id="acc-record">0</b><small>record</small></div>
+        </div>
+        <button id="lancer" class="bouton plein grand">Jouer</button>
+      </div>
+
+      <div id="partie" class="partie" hidden>
+        <div class="scores"><span id="vies" class="vies"></span><span id="avance"></span><span><b id="score">0</b> pts</span></div>
+        <div class="tete">
+          <div class="houle" aria-hidden="true"><i></i><i></i><i></i></div>
+          <p id="question" class="question"></p>
+          <p id="fil" class="fil"></p>
+          <div id="jauge" class="jauge"></div>
+          <p id="enjeu" class="enjeu"></p>
+        </div>
+        <div id="reponses" class="reponses"></div>
+        <div class="commandes">
+          <button id="plus" class="cote"><b>+1</b><small>note</small></button>
+          <button id="orbe" class="orbe" aria-label="Écouter la note">
+            <span class="onde"></span><span class="onde"></span>
+            <svg viewBox="0 0 24 24" width="40" height="40" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          </button>
+          <button id="aide-ecoute" class="cote"><b>♪♪♪</b><small>le début</small></button>
+        </div>
+      </div>
+
+      <div id="fin" class="fin" hidden>
+        <canvas id="fete" class="fete" aria-hidden="true"></canvas>
+        <p id="fin-sur" class="surtitre"></p>
+        <h2 id="fin-titre"></h2>
+        <div id="fin-carte" class="nouveau" hidden>
+          <button id="fin-pastille" class="medaillon" aria-label="Écouter la note"></button>
+          <p id="fin-touche" class="fin-touche"></p>
+          <b id="fin-morceau"></b>
+          <small id="fin-comp"></small>
+        </div>
+        <div class="chiffres"><div><b id="fin-score">0</b><small>cette partie</small></div><div><b id="fin-total">0</b><small>total</small></div></div>
+        <button id="rejouer" class="bouton plein grand">Continuer</button>
+      </div>
+    </section>
+
+    <section id="ecran-liste" class="ecran">
+      <div class="entete">
+        <p class="surtitre">Ma liste</p>
+        <p id="pl-resume" class="indice"></p>
+      </div>
+      <div id="pl-liste" class="liste"></div>
+    </section>
+  </div>
+
+  <div id="mini" class="mini" hidden>
+    <span id="mini-pastille" class="pastille"></span>
+    <button id="mini-ouvrir" class="mini-texte"><b id="mini-titre"></b><small id="mini-comp"></small></button>
+    <button id="mini-lecture" class="rond" aria-label="Lecture ou pause"></button>
+    <button id="mini-suivant" class="rond discret" aria-label="Morceau suivant"><svg viewBox="0 0 24 24" width="46%" height="46%" fill="currentColor"><path d="M6 5v14l9-7zM16 5h2.5v14H16z"/></svg></button>
+    <span id="mini-barre" class="mini-barre"></span>
+  </div>
+
+  <nav class="onglets">
+    <button data-ecran="jouer" class="actif">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg>
+      <span>Jouer</span>
+    </button>
+    <button data-ecran="liste">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h11M4 12h11M4 17h7"/><path d="M19 9v7.5"/><circle cx="17" cy="17" r="2"/></svg>
+      <span>Ma liste <i id="pl-badge"></i></span>
+    </button>
+  </nav>
+
+  <div id="feuille" class="feuille" hidden>
+    <div id="feuille-fond" class="feuille-fond"></div>
+    <div class="feuille-panneau">
+      <span class="poignee"></span>
+      <div id="f-resultat" class="f-resultat">
+        <p id="f-points" class="f-points"></p>
+        <p id="f-detail" class="f-detail"></p>
+        <div id="f-palier" class="f-palier">
+          <span class="badge"><i id="f-niv-avant"></i><i id="f-niv-apres"></i></span>
+          <span class="palier-texte"><small>palier</small><b id="f-palier-nom"></b></span>
+          <span id="f-pips" class="pips"></span>
+        </div>
+      </div>
+      <button id="f-pastille" class="medaillon moyen" aria-label="Écouter la note"></button>
+      <p id="f-note" class="fin-touche"></p>
+      <h2 id="f-titre"></h2>
+      <p id="f-comp" class="f-comp"></p>
+      <div id="f-clavier" class="clavier-plein"></div>
+      <div id="f-partition" class="partition"></div>
+      <p id="f-credit" class="credit"></p>
+      <div class="f-actions">
+        <button id="f-lecture" class="bouton">Écouter</button>
+        <button id="f-suite" class="bouton plein">Continuer</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.8.9/build/opensheetmusicdisplay.min.js"></script>
+<script src="data/enregistrements.js?v=14"></script>
+<script src="data/pieces.js?v=14"></script>
+<script src="app.js?v=14"></script>
+</body>
+</html>
