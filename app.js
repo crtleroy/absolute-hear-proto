@@ -13,17 +13,22 @@
   /* ---------- règles du jeu ---------- */
   const DEPART = 2; // morceaux dans la liste au tout début
   const VIES = 3;
-  const PALIERS = ["2 choix", "4 choix", "en étapes", "la note seule"];
-  const BASE = [10, 20, 40, 80]; // points d'une bonne réponse, par palier
+  const PALIERS = ["2 choix", "4 choix", "compositeur, morceau", "compositeur, type, numéro", "la note seule"]; // échelle du morceau
+  const NIVEAUX_NOTE = 3; // échelle de la note : 2 notes, 4 notes, puis le clavier
+  const DERNIER = PALIERS.length - 1;
+  const DEMI_VIE = 6; // les points en jeu sont divisés par deux toutes les 6 secondes
   const COEF_NOTES = [1, 0.75, 0.5, 0.35]; // selon le nombre de notes entendues (1 à 4)
   const COEF_ECOUTE = 0.2; // après « le début »
   const INTRO = 2.6; // en écoute synthétique : la première note seule, puis le morceau
   const ENTRACTE = 700; // silence entre deux morceaux, en millisecondes
-  const DELAI_INDICE = 2600; // au bonus : temps d'hésitation avant que la bonne touche commence à s'allumer
 
-  /* Une couleur par note. Pas de norme universelle : palette personnelle de l'auteur du projet
-     (ré bleu, mi rouge, la jaune, si vert, touches noires du rose au violet), complétée pour do, fa et sol. */
-  const COULEURS = ["#f4ecd8", "#f08fc0", "#5b9cf0", "#d86ad0", "#ef5b5b", "#f0954a", "#a57cf0", "#45c6c0", "#8a63d8", "#f2d14a", "#c59af5", "#5fc77a"];
+  /* Une couleur par note : arc-en-ciel continu sur les douze demi-tons (do rouge, ré jaune, mi vert, sol bleu, la violet…),
+     pour que deux notes voisines aient deux couleurs voisines. */
+  const COULEURS = Array.from({ length: 12 }, (_, i) => {
+    const h = i * 30, sat = 0.85, lum = 0.62, a = sat * Math.min(lum, 1 - lum);
+    const f = (n) => { const k = (n + h / 30) % 12; return Math.round(255 * (lum - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)))).toString(16).padStart(2, "0"); };
+    return "#" + f(0) + f(8) + f(4);
+  });
   const couleur = (p) => COULEURS[p.midis[0] % 12];
   const sci = (m) => EN[m % 12] + (Math.floor(m / 12) - 1);
   const pc = (p) => p.midis[0] % 12;
@@ -54,13 +59,14 @@
   racine.setProperty("--v3", vague("#fff0c8", 240, 76, 6));
 
   /* ---------- état persistant ---------- */
-  let S = { liste: [], palier: {}, acquis: {}, points: 0, record: 0 };
+  let S = { liste: [], palier: {}, niveauNote: {}, acquis: {}, points: 0, record: 0 };
   try { S = Object.assign(S, JSON.parse(localStorage.getItem("absolute-hear-3") || "{}")); } catch (e) { /* stockage indisponible */ }
   S.liste = S.liste.filter((id) => PAR_ID[id]);
   if (S.liste.length < DEPART) S.liste = PIECES.slice(0, DEPART).map((p) => p.id);
   const sauver = () => { try { localStorage.setItem("absolute-hear-3", JSON.stringify(S)); } catch (e) { /* ignoré */ } };
   const maListe = () => S.liste.map((id) => PAR_ID[id]);
-  const palier = (p) => S.palier[p.id] || 0;
+  const palier = (p) => Math.min(DERNIER, S.palier[p.id] || 0);
+  const niveauNote = (p) => S.niveauNote[p.id] || 0;
   const prochain = () => PIECES.find((p) => !S.liste.includes(p.id));
 
   let toastTimer;
@@ -276,7 +282,7 @@
       r.className = "rang" + (actif ? " encours" : "");
       r.innerHTML = `<button class="rond" aria-label="Écouter">${actif && !lecteur.pause ? ICONE.pause : ICONE.lire}</button>
         <button class="texte"><b>${p.titre}</b><small>${p.compositeur} · ${PALIERS[palier(p)]}</small></button>
-        <span class="etoiles">${[0, 1, 2, 3].map((i) => `<i class="${palier(p) >= i ? "ok" : ""}"></i>`).join("")}</span>
+        <span class="etoiles">${[0, 1, 2, 3, 4].map((i) => `<i class="${palier(p) >= i ? "ok" : ""}"></i>`).join("")}</span>
         <span class="pastille" style="--c:${couleur(p)}">${nomCourt(p)}</span>`;
       r.querySelector(".rond").addEventListener("click", () => ecouter(p, maListe()));
       r.querySelector(".texte").addEventListener("click", () => ouvrirFiche(p));
@@ -310,7 +316,7 @@
       $("f-niv-avant").textContent = resultat.avant + 1;
       $("f-niv-apres").textContent = resultat.apres + 1;
       $("f-palier-nom").textContent = resultat.acquis ? "note acquise" : PALIERS[resultat.apres];
-      const pips = (n) => [0, 1, 2, 3].map((i) => `<i class="${n >= i ? "ok" : ""}"></i>`).join("");
+      const pips = (n) => [0, 1, 2, 3, 4].map((i) => `<i class="${n >= i ? "ok" : ""}"></i>`).join("");
       $("f-pips").innerHTML = pips(resultat.avant);
       if (resultat.apres !== resultat.avant) setTimeout(() => {
         if (fiche.piece !== p) return;
@@ -370,7 +376,7 @@
   function niveauxTouches() {
     const niv = {};
     maListe().forEach((p) => {
-      const n = S.acquis[p.id] ? 5 : palier(p) + 1;
+      const n = S.acquis[p.id] ? 5 : Math.min(4, palier(p) + 1);
       p.midis.forEach((m) => { niv[m] = Math.max(niv[m] || 0, n); });
     });
     return niv;
@@ -394,6 +400,7 @@
         allumees++;
         somme += n;
         t.classList.add("n" + n);
+        t.style.setProperty("--c", COULEURS[m % 12]);
         if (niveauxVus && n > (niveauxVus[m] || 0)) t.classList.add("eveil");
       }
       zone.appendChild(t);
@@ -418,7 +425,7 @@
     let actif = false, t0 = 0, choc = 0, teinteNote = "#e9c27a", id = 0;
     const melanger = (hex, vers, k) => {
       const c = (h, i) => parseInt(h.slice(1 + 2 * i, 3 + 2 * i), 16);
-      return `rgb(${[0, 1, 2].map((i) => Math.round(c(hex, i) + (c(vers, i) - c(hex, i)) * k)).join(",")})`;
+      return "#" + [0, 1, 2].map((i) => Math.round(c(hex, i) + (c(vers, i) - c(hex, i)) * k).toString(16).padStart(2, "0")).join("");
     };
     function image(maintenant) {
       if (!actif) return;
@@ -458,8 +465,8 @@
           ctx.stroke();
         }
       };
-      anneaux(34, 0.045, 3, 0, "#fff6dc");
-      anneaux(26, -0.03, 5, 2.1, "#e9c27a");
+      anneaux(34, 0.045, 3, 0, melanger(teinteNote, "#ffffff", 0.75)); // tout l'écran est à la couleur de la note
+      anneaux(26, -0.03, 5, 2.1, melanger(teinteNote, "#ffffff", 0.3));
       if (tc > 0 && tc < 1.6) { // onde de choc
         const k = 1 - Math.pow(1 - tc / 1.6, 3);
         for (let j = 0; j < 4; j++) {
@@ -501,15 +508,20 @@
     $("avance").textContent = `${Math.min(run.i + 1, run.file.length)} / ${run.file.length}`;
     $("score").textContent = run.score;
   }
-  const coef = () => (q.ecoute ? COEF_ECOUTE : COEF_NOTES[q.nb - 1]);
-  const enJeu = () => Math.max(1, Math.round(BASE[q.palier] * coef()));
+  /* Points en jeu : 100 par palier atteint, divisés par deux toutes les 6 secondes, réduits par les aides. */
+  function valeur() {
+    const base = q.phase === "titre" || q.T === DERNIER ? 100 * (q.T + 1) : 100 * (q.N + 1);
+    const aides = q.phase === "titre" || q.T === DERNIER ? (q.ecoute ? COEF_ECOUTE : COEF_NOTES[q.nb - 1]) : 1;
+    return Math.max(1, Math.round(base * aides * Math.pow(0.5, (performance.now() - q.t0) / 1000 / DEMI_VIE)));
+  }
   function majEnjeu() {
     $("jauge").innerHTML = COEF_NOTES.map((_, i) => `<span class="${i < q.nb ? "ok" : ""}"></span>`).join("");
-    $("enjeu").innerHTML = q.phase === "bonus" ? (q.bonusPerdu ? "la note se révèle" : `bonus <b>+${Math.round(BASE[q.palier] / 2)}</b>`) : `<b>${enJeu()}</b> pts en jeu`;
-    const fige = q.fini || q.phase === "bonus" || q.ecoute;
+    if (!q.fini) $("enjeu").innerHTML = `<b>${valeur()}</b> pts`;
+    const fige = q.fini || q.ecoute || (q.phase === "note" && q.T < DERNIER);
     $("plus").disabled = fige || q.nb >= COEF_NOTES.length;
     $("aide-ecoute").disabled = fige;
   }
+  setInterval(() => { if (q && !q.fini && !$("partie").hidden) $("enjeu").innerHTML = `<b>${valeur()}</b> pts`; }, 200);
   function sonner() {
     const o = $("orbe"), h = document.querySelector(".houle");
     o.classList.remove("sonne");
@@ -526,7 +538,7 @@
 
   function poser() {
     const p = run.file[run.i];
-    q = { p, palier: palier(p), nb: 1, ecoute: false, fini: false, phase: palier(p) === 3 ? "note" : "titre", etape: 0, choisi: [], gain: 0 };
+    q = { p, T: palier(p), N: niveauNote(p), nb: 1, ecoute: false, fini: false, phase: palier(p) === DERNIER ? "note" : "titre", etape: 0, choisi: [], gain: 0, bonus: 0, t0: performance.now() };
     majStatut();
     rendreReponses();
     majEnjeu();
@@ -552,47 +564,51 @@
   function rendreReponses() {
     const zone = $("reponses"), p = q.p;
     $("fil").textContent = "";
-    if (q.phase === "note" || q.phase === "bonus") {
-      $("question").textContent = q.phase === "note" ? "Quelle est cette note ?" : "Et sa première note ?";
-      if (q.phase === "bonus") $("fil").textContent = `${p.titre} · ${p.compositeur}`;
-      zone.className = "reponses";
-      zone.innerHTML = "";
-      clavierOctave(zone, repondreNote);
-      if (q.phase === "bonus") {
-        const moi = q; // après quelques secondes d'hésitation, la bonne touche s'allume doucement : plus de points à gagner
-        setTimeout(() => {
-          if (q !== moi || moi.fini) return;
-          moi.bonusPerdu = true;
-          zone.style.setProperty("--c", couleur(p));
-          zone.querySelectorAll(`[data-pc="${pc(p)}"]`).forEach((t) => t.classList.add("indice"));
-          majEnjeu();
-        }, DELAI_INDICE);
+    if (q.phase === "note") {
+      const seule = q.T === DERNIER;
+      $("question").textContent = seule ? "Quelle est cette note ?" : "Et sa première note ?";
+      if (!seule) $("fil").textContent = `${p.titre} · ${p.compositeur}`;
+      if (seule || q.N >= NIVEAUX_NOTE - 1) { // dernier niveau : le clavier
+        zone.className = "reponses";
+        zone.innerHTML = "";
+        clavierOctave(zone, repondreNote);
+        return;
       }
+      // d'abord 2 notes au choix, puis 4 ; les mauvaises réponses sont des notes voisines
+      const autres = melange([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]).slice(0, q.N === 0 ? 1 : 3).map((d) => (pc(p) + d) % 12);
+      const liste = melange([pc(p), ...autres]);
+      options(zone, q.N === 0 ? "deux" : "quatre", liste, (v) => `<b style="color:${COULEURS[v]}">${FR[v]}</b>`, (v, b) => repondreNote(v, b));
+      [...zone.children].forEach((b, i) => { b.dataset.juste = liste[i] === pc(p) ? "1" : ""; });
       return;
     }
     $("question").textContent = "Quel morceau ?";
-    if (q.palier < 2) {
-      const liste = melange([p, ...leurres(p, q.palier === 0 ? 1 : 3)]);
-      options(zone, q.palier === 0 ? "deux" : "quatre", liste, (x) => `<b>${x.titre}</b><small>${x.compositeur}</small>`, (x, b) => repondreTitre(x === p, b));
+    if (q.T < 2) {
+      const liste = melange([p, ...leurres(p, q.T === 0 ? 1 : 3)]);
+      options(zone, q.T === 0 ? "deux" : "quatre", liste, (x) => `<b>${x.titre}</b><small>${x.compositeur}</small>`, (x, b) => repondreTitre(x === p, b));
       [...zone.children].forEach((b, i) => { b.dataset.juste = liste[i] === p ? "1" : ""; });
       return;
     }
-    /* troisième palier : compositeur, puis œuvre, puis numéro */
-    const etapes = [
+    /* en étapes. Palier 3 : compositeur puis morceau. Palier 4 : compositeur, type, numéro. */
+    const duMeme = PIECES.filter((x) => x.compositeur === p.compositeur);
+    const etapes = (q.T === 2 ? [
       { nom: "Le compositeur ?", juste: p.compositeur, tous: uniques(PIECES.map((x) => x.compositeur)) },
-      { nom: "L'œuvre ?", juste: p.forme, tous: uniques([...PIECES.filter((x) => x.compositeur === p.compositeur), ...PIECES].map((x) => x.forme)) },
-      { nom: "Laquelle ?", juste: p.numero, tous: uniques(PIECES.filter((x) => x.compositeur === p.compositeur && x.forme === p.forme).map((x) => x.numero)), strict: true },
-    ].filter((e) => !e.strict || e.tous.length > 1);
+      { nom: "Le morceau ?", juste: p.titre, tous: uniques([...duMeme, ...PIECES].map((x) => x.titre)), garde: Math.max(1, Math.min(3, duMeme.length - 1)) },
+    ] : [
+      { nom: "Le compositeur ?", juste: p.compositeur, tous: uniques(PIECES.map((x) => x.compositeur)) },
+      { nom: "Le type ?", juste: p.forme, tous: uniques([...duMeme, ...PIECES].map((x) => x.forme)), garde: 2 },
+      { nom: "Lequel ?", juste: p.numero, tous: uniques(duMeme.filter((x) => x.forme === p.forme).map((x) => x.numero)), strict: true },
+    ]).filter((e) => !e.strict || e.tous.length > 1);
     const e = etapes[q.etape];
     $("question").textContent = e.nom;
     $("fil").textContent = q.choisi.join(" › ");
     const autres = e.tous.filter((v) => v !== e.juste);
-    const faux = e.strict ? autres : [...autres.slice(0, 2), ...melange(autres.slice(2))];
+    const g = e.garde || 0; // les premiers de la liste (même compositeur) sont gardés tels quels, le reste est tiré au hasard
+    const faux = e.strict ? autres : [...autres.slice(0, g), ...melange(autres.slice(g))];
     const liste = melange([e.juste, ...faux.slice(0, 3)]);
     options(zone, liste.length > 2 ? "quatre" : "deux", liste, (v) => `<b>${v}</b>`, (v, b) => {
       if (q.fini) return;
       if (v !== e.juste) return repondreTitre(false, b);
-      q.choisi.push(v);
+      q.choisi.push(v.length > 26 ? v.slice(0, 24) + "…" : v);
       q.etape++;
       if (q.etape >= etapes.length) repondreTitre(true, b); else rendreReponses();
     });
@@ -602,49 +618,53 @@
     if (q.fini) return;
     document.querySelectorAll("#reponses .option").forEach((b) => { if (b.dataset.juste) b.classList.add("bon"); });
     if (!juste) { bouton.classList.add("faux"); return conclure(false); }
-    q.gain = enJeu();
-    q.phase = "bonus";
+    q.gain = valeur();
+    q.phase = "note";
+    q.t0 = performance.now() + 450; // le chrono de la note repart quand ses réponses s'affichent
     majEnjeu();
     setTimeout(rendreReponses, 450);
   }
-  function repondreNote(choix, touche) {
+  function repondreNote(choix, el) {
     if (q.fini) return;
-    const p = q.p, juste = choix === pc(p);
-    // on entend la touche qu'on vient de jouer, à l'octave la plus proche de la vraie note
+    const p = q.p, juste = choix === pc(p), pts = valeur();
+    // on entend la note qu'on vient de choisir, à l'octave la plus proche de la vraie
     const midi = p.midis[0] + ((choix - pc(p) + 18) % 12) - 6;
     arreter();
     if (piano) piano.triggerAttackRelease(Tone.Frequency(midi, "midi").toFrequency(), 1.3, undefined, 0.8);
     const zone = $("reponses");
     zone.style.setProperty("--c", couleur(p));
-    zone.querySelectorAll(".indice").forEach((t) => t.classList.remove("indice"));
-    zone.querySelectorAll(`[data-pc="${pc(p)}"]`).forEach((t) => t.classList.add("cible"));
-    if (!juste) touche.classList.add("erreur");
-    if (q.phase === "bonus") {
-      q.bonus = juste && !q.bonusPerdu ? Math.round(BASE[q.palier] / 2) : 0;
-      q.bonusRate = !juste || !!q.bonusPerdu;
-      return conclure(true, 1100);
+    if (el.classList.contains("option")) {
+      zone.querySelectorAll(".option").forEach((b) => { if (b.dataset.juste) b.classList.add("bon"); });
+      if (!juste) el.classList.add("faux");
+    } else {
+      zone.querySelectorAll(`[data-pc="${pc(p)}"]`).forEach((t) => t.classList.add("cible"));
+      if (!juste) el.classList.add("erreur");
     }
-    if (juste) q.gain = enJeu();
-    conclure(juste, 1100);
+    if (q.T === DERNIER) { q.gain = juste ? pts : 0; return conclure(juste, 1100); }
+    q.bonus = juste ? pts : 0;
+    q.noteJuste = juste;
+    conclure(true, 1100);
   }
   function conclure(juste, delai = 700) {
     q.fini = true;
     majEnjeu();
-    const p = q.p, avant = q.palier, dernier = q.phase === "note";
-    const gain = juste ? q.gain + (q.bonus || 0) : 0;
-    const apres = Math.max(0, Math.min(3, avant + (juste ? 1 : -1)));
+    const p = q.p, avant = q.T, seule = q.T === DERNIER;
+    const gain = juste ? q.gain + q.bonus : 0;
+    const apres = Math.max(0, Math.min(DERNIER, avant + (juste ? 1 : -1)));
     S.palier[p.id] = apres;
-    if (juste && avant === 3) S.acquis[p.id] = true; // réussi au dernier palier : la note est acquise
+    if (juste && !seule) S.niveauNote[p.id] = Math.max(0, Math.min(NIVEAUX_NOTE - 1, q.N + (q.noteJuste ? 1 : -1))); // la note a sa propre échelle
+    if (juste && seule) S.acquis[p.id] = true; // réussi au dernier palier : la note est acquise
     if (!juste) delete S.acquis[p.id];
     S.points += gain;
     run.score += gain;
     if (!juste) run.vies--;
     sauver();
     majStatut();
+    $("enjeu").innerHTML = juste ? `<b>+${gain}</b>` : "";
     const parts = !juste ? [{ txt: "−1 vie" }]
-      : dernier ? [{ txt: `note +${q.gain}` }]
-      : [{ txt: `morceau +${q.gain}` }, q.bonusRate ? { txt: "note", non: true } : { txt: `note +${q.bonus}` }];
-    const resultat = { juste, gain, parts, avant, apres, acquis: juste && avant === 3 };
+      : seule ? [{ txt: `note +${q.gain}` }]
+      : [{ txt: `morceau +${q.gain}` }, q.noteJuste ? { txt: `note +${q.bonus}` } : { txt: "note", non: true }];
+    const resultat = { juste, gain, parts, avant, apres, acquis: juste && seule };
     setTimeout(() => { apercu(p).catch(() => {}); ouvrirFiche(p, resultat, suivante); }, delai);
   }
   /* Entre deux morceaux : fondu, silence, puis la note suivante. */
@@ -682,9 +702,7 @@
       $("fin-morceau").textContent = nouveau.titre;
       $("fin-pastille").onclick = () => { fete.eclat(); extrait(nouveau, 1).catch(() => {}); };
       fete.lancer(couleur(nouveau));
-      // sa note pour la saluer, puis le morceau se lance tout seul
-      setTimeout(() => { if (!$("fin").hidden && !lecteur.joue) extrait(nouveau, 1).catch(() => {}); }, 500);
-      setTimeout(() => { if (!$("fin").hidden && lecteur.mode !== "ecoute") ecouter(nouveau).catch(() => {}); }, 2800);
+      setTimeout(() => { if (!$("fin").hidden && lecteur.mode !== "ecoute") ecouter(nouveau).catch(() => {}); }, 900);
     }
     $("fin-score").textContent = run.score;
     $("fin-total").textContent = S.points;

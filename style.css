@@ -291,3 +291,22 @@ p { margin: 0; }
 .fin .nouveau b, .fin .nouveau small, .fin .fin-touche, .fin h2, .fin .surtitre { text-shadow: 0 0 6px #0f0e14, 0 2px 14px #0f0e14, 0 0 22px #0f0e14; }
 .fin .fin-touche { color: color-mix(in srgb, var(--c, var(--or)) 55%, #fff); font-weight: 600; }
 .partition { height: 124px; }
+
+/* ================= arc-en-ciel : chaque touche allumée prend la couleur de sa note ================= */
+.grand-clavier { background: none; }
+.grand-clavier::before, .grand-clavier::after { display: none; }
+.grand-clavier .tb[class*=" n"] { background: color-mix(in srgb, var(--c) var(--f), #2b2931); animation: respire 4.5s ease-in-out infinite alternate; }
+.grand-clavier .tb.n1 { --f: 30%; } .grand-clavier .tb.n2 { --f: 48%; } .grand-clavier .tb.n3 { --f: 66%; } .grand-clavier .tb.n4 { --f: 84%; } .grand-clavier .tb.n5 { --f: 100%; }
+.grand-clavier .tb.n4, .grand-clavier .tb.n5 { box-shadow: inset -1px 0 0 #0f0e14, 0 5px 12px color-mix(in srgb, var(--c) 60%, transparent); }
+.grand-clavier .tn[class*=" n"] { background-image: none; background-color: color-mix(in srgb, var(--c) var(--f), #050408); animation: respire 4.5s ease-in-out infinite alternate;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--c) 75%, transparent), 0 2px 6px color-mix(in srgb, var(--c) 40%, transparent); }
+.grand-clavier .tn.n1 { --f: 30%; } .grand-clavier .tn.n2 { --f: 40%; } .grand-clavier .tn.n3 { --f: 50%; } .grand-clavier .tn.n4 { --f: 60%; } .grand-clavier .tn.n5 { --f: 72%; }
+@keyframes respire { from { filter: brightness(.86); } to { filter: brightness(1.18); } }
+/* nouveau morceau : tout l'écran à la couleur de la note */
+.fin.gagne { background: radial-gradient(95% 62% at 50% 36%, color-mix(in srgb, var(--c) 38%, transparent), transparent 78%); }
+.fin.gagne h2, .fin.gagne .nouveau b { color: color-mix(in srgb, var(--c) 68%, #fff); }
+.fin.gagne .surtitre, .fin.gagne .nouveau small { color: color-mix(in srgb, var(--c) 45%, #fff); opacity: 1; }
+.fin.gagne .bouton.plein { background: var(--c); color: #14121a; }
+.fin.gagne .chiffres div { border-color: color-mix(in srgb, var(--c) 50%, transparent); }
+.fin.gagne .chiffres b { color: color-mix(in srgb, var(--c) 60%, #fff); }
+.enjeu b { font-size: 1.5rem; font-family: var(--titre); }
