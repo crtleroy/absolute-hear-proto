@@ -138,19 +138,31 @@
     else if (!S.profil.cree && S.stats.victoires > 0 && !S.profil.relance) { S.profil.relance = jour(); AH.sauver(); creerProfil("Sans profil, la progression n'est pas gardée"); }
   });
 
-  /* ---------- classement (données de démonstration) ---------- */
-  function classement() {
-    const faux = [["Camille", 2840], ["Noé", 2310], ["Inès", 1975], ["Lucas", 1620], ["Jade", 1380], ["Hugo", 990], ["Lina", 640], ["Tom", 410]];
-    const lignes = [...faux, [S.profil.cree ? S.profil.nom : "Toi", S.record, true]].sort((x, y) => y[1] - x[1]);
-    const v = volet(`
-      <p class="surtitre">Classement</p>
-      <h2>Meilleurs scores</h2>
-      <div class="onglets-cl"><button class="on">Cette semaine</button><button data-bientot="Les amis arrivent avec les comptes">Amis</button><button data-bientot="Le classement mondial arrive avec le serveur">Monde</button></div>
-      <ol class="classement">${lignes.map((l, i) => `<li class="${l[2] ? "moi" : ""}"><span>${i + 1}</span><b>${l[0]}</b><i>${l[1]}</i></li>`).join("")}</ol>
-      <p class="demo">Prototype : les autres joueurs sont fictifs, seul ton record est réel.</p>
-      <button class="bouton plein grand" data-fermer>Fermer</button>`);
-    v.querySelectorAll("[data-bientot]").forEach((b) => b.addEventListener("click", () => AH.toast(b.dataset.bientot)));
+  /* ---------- classement : un onglet à part entière (données de démonstration) ---------- */
+  let periode = "semaine";
+  function rendreClassement() {
+    const faux = { semaine: [["Camille", 2840], ["Noé", 2310], ["Inès", 1975], ["Lucas", 1620], ["Jade", 1380], ["Hugo", 990], ["Lina", 640], ["Tom", 410]],
+      monde: [["Akira", 9120], ["Sofia", 8450], ["Camille", 7790], ["Liam", 6980], ["Noé", 6240], ["Mateo", 5510], ["Inès", 4870], ["Ella", 3960], ["Lucas", 2890], ["Jade", 1750]] };
+    const moi = [S.profil.cree ? S.profil.nom : "Toi", S.record, true];
+    const lignes = periode === "amis" ? [moi] : [...faux[periode], moi].sort((x, y) => y[1] - x[1]);
+    const rang = lignes.findIndex((l) => l[2]) + 1, podium = lignes.slice(0, 3), suite = lignes.slice(3);
+    const marche = (l, n) => l ? `<div class="marche m${n}${l[2] ? " moi" : ""}"><span class="avatar">${l[0][0]}</span><b>${l[0]}</b><i>${l[1]}</i><em>${n}</em></div>` : "";
+    $("ecran-classement").innerHTML = `
+      <div class="entete"><p class="surtitre">Classement</p><h2>Meilleurs scores</h2></div>
+      <div class="onglets-cl">${[["semaine", "Semaine"], ["amis", "Amis"], ["monde", "Monde"]].map(([k, n]) => `<button data-p="${k}" class="${periode === k ? "on" : ""}">${n}</button>`).join("")}</div>
+      <div class="cl-defile">
+        ${periode === "amis" ? `<div class="cl-vide"><b>Invite tes amis</b><small>Le classement entre amis arrive avec les comptes.</small><button class="bouton plein" id="cl-inviter">Inviter</button></div>` : `
+        <div class="podium">${marche(podium[1], 2)}${marche(podium[0], 1)}${marche(podium[2], 3)}</div>
+        <ol class="classement" start="4">${suite.map((l, i) => `<li class="${l[2] ? "moi" : ""}"><span>${i + 4}</span><b>${l[0]}</b><i>${l[1]}</i></li>`).join("")}</ol>`}
+        <p class="demo">Prototype : les autres joueurs sont fictifs, seul ton record est réel.</p>
+      </div>
+      <div class="cl-moi"><span>${periode === "amis" ? "–" : rang}</span><b>${moi[0]}</b><i>${S.record}</i><button id="cl-jouer" class="bouton plein">Battre mon record</button></div>`;
+    document.querySelectorAll("#ecran-classement .onglets-cl button").forEach((b) => b.addEventListener("click", () => { periode = b.dataset.p; rendreClassement(); }));
+    const inv = $("cl-inviter");
+    if (inv) inv.addEventListener("click", () => AH.toast("L'invitation arrive avec les comptes"));
+    $("cl-jouer").addEventListener("click", () => AH.aller("jouer"));
   }
+  document.addEventListener("ah:ecran", (e) => { if (e.detail === "classement") rendreClassement(); });
 
   /* ---------- textes légaux et état du compte ---------- */
   function texte(titre, corps) {
@@ -187,7 +199,6 @@
           <div><b>${tempsMoyen}<i> s</i></b><small>par réponse</small></div>
         </div>
 
-        <button id="cl-ouvrir" class="ligne fort"><b>Classement</b><em>démo</em></button>
         <button id="partager" class="ligne fort"><b>Partager mon clavier</b></button>
 
         <p class="rubrique">Abonnement</p>
@@ -224,7 +235,6 @@
     document.querySelectorAll("#reg-vibration button").forEach((b) => b.addEventListener("click", () => { S.reglages.vibration = !!b.dataset.v; AH.sauver(); rendreProfil(); }));
     sur("pf-creer", () => creerProfil());
     sur("pf-modifier", () => creerProfil());
-    sur("cl-ouvrir", classement);
     sur("pm-ouvrir", offrePremium);
     sur("pub-test", montrerPub);
     sur("partager", partager);
