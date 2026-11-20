@@ -96,6 +96,9 @@
     }
     return pianoPret;
   }
+  const reveiller = () => { try { if (Tone.context.state !== "running") Tone.context.resume(); } catch (e) { /* pas encore démarré */ } };
+  ["pointerdown", "touchend", "click"].forEach((ev) => document.addEventListener(ev, reveiller, true));
+  document.addEventListener("visibilitychange", reveiller);
   const son = new Audio();
   son.preload = "auto";
   const lecteur = { piece: null, mode: null, source: null, duree: 0, joue: false, pause: false, file: null };
@@ -152,6 +155,7 @@
   }
   async function jouerSynthese(p, mode, nb, tenir, intro) {
     await pretAudio();
+    reveiller();
     arreter();
     Object.assign(lecteur, { piece: p, mode, source: "synth", duree: programmer(p, nb, tenir, intro), joue: true, pause: false });
     Tone.Transport.start("+0.05", 0);
@@ -339,14 +343,18 @@
     afficherPartition(p, $("f-partition"));
   }
   /* Le total de points défile de 0 à sa valeur. */
-  function compter(el, total) {
-    const t0 = performance.now();
-    const pas = () => {
-      const k = Math.min(1, (performance.now() - t0) / 700);
-      el.textContent = "+" + Math.round(total * (1 - Math.pow(1 - k, 3)));
-      if (k < 1) requestAnimationFrame(pas);
-    };
-    requestAnimationFrame(pas);
+  function compter(el, total, prefixe = "+", duree = 700, attente = 0) {
+    el.textContent = prefixe + (attente ? 0 : total);
+    setTimeout(() => {
+      const t0 = performance.now();
+      const pas = () => {
+        const k = Math.min(1, (performance.now() - t0) / duree);
+        el.textContent = prefixe + Math.round(total * (1 - Math.pow(1 - k, 3)));
+        if (k < 1) requestAnimationFrame(pas);
+      };
+      requestAnimationFrame(pas);
+      setTimeout(() => { el.textContent = prefixe + total; }, duree + 80); // valeur finale garantie même si l'animation est suspendue
+    }, attente);
   }
   function majFiche() {
     const p = fiche.piece;
@@ -411,7 +419,7 @@
   }
   function rendreAccueil() {
     vue("accueil");
-    $("acc-points").textContent = S.points;
+    $("acc-total").textContent = " / " + PIECES.length;
     $("acc-liste").textContent = S.liste.length;
     $("acc-record").textContent = S.record;
     rendreClavierAccueil();
@@ -455,7 +463,7 @@
           ctx.beginPath();
           for (let a = 0; a <= 120; a++) {
             const th = (a / 120) * Math.PI * 2;
-            const d = 1 + 0.045 * k * Math.sin(lobes * th + t * 0.8 + phase + i * 0.35) + 0.028 * Math.sin((lobes * 2 + 1) * th - t * 1.1 + i * 0.9) + 0.012 * Math.sin(17 * th + t * 1.9 + phase);
+            const d = 1 + Math.min(1, k * 2.4) * (0.05 * k * Math.sin(lobes * th + t * 0.8 + phase + i * 0.35) + 0.02 * Math.sin((lobes * 2 + 1) * th - t * 1.1 + i * 0.9) + 0.008 * Math.sin(17 * th + t * 1.9 + phase));
             const x = cx + Math.cos(th) * r * d, y = cy + Math.sin(th) * r * d;
             if (a) ctx.lineTo(x, y); else ctx.moveTo(x, y);
           }
@@ -493,6 +501,12 @@
 
   /* ---------- la partie ---------- */
   async function lancer() {
+    if (!son.dataset.ouvert && PIECES.some((p) => ENR[p.titre])) {
+      son.dataset.ouvert = "1";
+      son.muted = true;
+      son.src = ENR[PIECES.find((p) => ENR[p.titre]).titre].audio;
+      son.play().then(() => { son.pause(); son.muted = false; }).catch(() => { son.muted = false; });
+    }
     try { await pretAudio(); } catch (e) { return; }
     await fondre(200);
     majLecture();
@@ -684,6 +698,7 @@
   }
   function finir(victoire) {
     q = null;
+    const record = run.score > S.record && run.score > 0;
     S.record = Math.max(S.record, run.score);
     const nouveau = victoire ? prochain() : null;
     if (nouveau) { S.liste.push(nouveau.id); S.palier[nouveau.id] = 0; }
@@ -704,8 +719,12 @@
       fete.lancer(couleur(nouveau));
       setTimeout(() => { if (!$("fin").hidden && lecteur.mode !== "ecoute") ecouter(nouveau).catch(() => {}); }, 900);
     }
-    $("fin-score").textContent = run.score;
-    $("fin-total").textContent = S.points;
+    $("fin-record").hidden = !record;
+    const zs = document.querySelector(".score-fin");
+    zs.classList.remove("eclate");
+    void zs.offsetWidth;
+    zs.classList.add("eclate");
+    compter($("fin-score"), run.score, "", 1400, 700);
     majTout();
   }
 

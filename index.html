@@ -7,7 +7,7 @@
 <title>Absolute Hear</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=16">
+<link rel="stylesheet" href="style.css?v=17">
 </head>
 <body>
 <div id="app">
@@ -22,10 +22,10 @@
           <div id="acc-clavier" class="grand-clavier" aria-hidden="true"></div>
           <p id="acc-touches" class="jauge-touches"></p>
         </div>
-        <div class="chiffres">
-          <div><b id="acc-points">0</b><small>points</small></div>
-          <div><b id="acc-liste">2</b><small>morceaux</small></div>
-          <div><b id="acc-record">0</b><small>record</small></div>
+        <div class="reperes">
+          <div><small>record</small><b id="acc-record">0</b></div>
+          <i></i>
+          <div><small>morceaux</small><b><span id="acc-liste">2</span><em id="acc-total"></em></b></div>
         </div>
         <button id="lancer" class="bouton plein grand">Jouer</button>
       </div>
@@ -60,7 +60,7 @@
           <b id="fin-morceau"></b>
           <small id="fin-comp"></small>
         </div>
-        <div class="chiffres"><div><b id="fin-score">0</b><small>cette partie</small></div><div><b id="fin-total">0</b><small>total</small></div></div>
+        <div class="score-fin"><p id="fin-record" class="record" hidden>Nouveau record</p><b id="fin-score">0</b><small>points</small></div>
         <button id="rejouer" class="bouton plein grand">Continuer</button>
       </div>
     </section>
@@ -125,8 +125,8 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.8.9/build/opensheetmusicdisplay.min.js"></script>
-<script src="data/enregistrements.js?v=16"></script>
-<script src="data/pieces.js?v=16"></script>
-<script src="app.js?v=16"></script>
+<script src="data/enregistrements.js?v=17"></script>
+<script src="data/pieces.js?v=17"></script>
+<script src="app.js?v=17"></script>
 </body>
 </html>
