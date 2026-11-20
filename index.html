@@ -7,7 +7,13 @@
 <title>Absolute Hear</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=19">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icone.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icone-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Absolute Hear">
+<link rel="stylesheet" href="style.css?v=20">
 </head>
 <body>
 <div id="app">
@@ -67,6 +73,8 @@
       </div>
     </section>
 
+    <section id="ecran-profil" class="ecran"></section>
+
     <section id="ecran-liste" class="ecran">
       <div class="entete">
         <p class="surtitre">Ma liste</p>
@@ -92,6 +100,10 @@
     <button data-ecran="liste">
       <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h11M4 12h11M4 17h7"/><path d="M19 9v7.5"/><circle cx="17" cy="17" r="2"/></svg>
       <span>Ma liste <i id="pl-badge"></i></span>
+    </button>
+    <button data-ecran="profil">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="8.5" r="3.6"/><path d="M5 20c.8-3.6 3.6-5.4 7-5.4s6.2 1.8 7 5.4"/></svg>
+      <span>Profil</span>
     </button>
   </nav>
 
@@ -124,8 +136,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.8.9/build/opensheetmusicdisplay.min.js"></script>
-<script src="data/enregistrements.js?v=19"></script>
-<script src="data/pieces.js?v=19"></script>
-<script src="app.js?v=19"></script>
+<script src="data/enregistrements.js?v=20"></script>
+<script src="data/pieces.js?v=20"></script>
+<script src="app.js?v=20"></script>
+<script src="plus.js?v=20"></script>
 </body>
 </html>

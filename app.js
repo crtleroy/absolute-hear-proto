@@ -268,6 +268,7 @@
     document.querySelectorAll(".ecran").forEach((e) => e.classList.toggle("actif", e.id === "ecran-" + nom));
     document.querySelectorAll(".onglets button").forEach((b) => b.classList.toggle("actif", b.dataset.ecran === nom));
     if (nom === "liste") rendreListe();
+    document.dispatchEvent(new CustomEvent("ah:ecran", { detail: nom }));
     majLecture();
   }
   document.querySelectorAll(".onglets button").forEach((b) => b.addEventListener("click", () => aller(b.dataset.ecran)));
@@ -603,7 +604,7 @@
 
   function poser() {
     const p = run.file[run.i];
-    q = { p, T: palier(p), N: niveauNote(p), nb: 1, ecoute: false, fini: false, phase: palier(p) === DERNIER ? "note" : "titre", etape: 0, choisi: [], gain: 0, bonus: 0, t0: performance.now() };
+    q = { p, T: palier(p), N: niveauNote(p), nb: 1, ecoute: false, fini: false, phase: palier(p) === DERNIER ? "note" : "titre", etape: 0, choisi: [], gain: 0, bonus: 0, t0: performance.now(), debut: performance.now() };
     majStatut();
     rendreReponses();
     majEnjeu();
@@ -726,6 +727,7 @@
     sauver();
     majStatut();
     $("enjeu").innerHTML = juste ? `<b>+${gain}</b>` : "";
+    document.dispatchEvent(new CustomEvent("ah:reponse", { detail: { juste, palier: avant, temps: (performance.now() - q.debut) / 1000 } }));
     const parts = !juste ? [{ txt: "−1 vie" }]
       : seule ? [{ txt: `note +${q.gain}` }]
       : [{ txt: `morceau +${q.gain}` }, q.noteJuste ? { txt: `note +${q.bonus}` } : { txt: "note", non: true }];
@@ -755,6 +757,7 @@
     const nouveau = victoire ? prochain() : null;
     if (nouveau) { S.liste.push(nouveau.id); S.palier[nouveau.id] = 0; }
     sauver();
+    document.dispatchEvent(new CustomEvent("ah:fin", { detail: { victoire, score: run.score } }));
     vue("fin");
     $("fin").classList.toggle("gagne", !!nouveau);
     $("fin-sur").textContent = victoire ? "Liste terminée" : "Partie terminée";
@@ -803,6 +806,8 @@
   $("mini-suivant").addEventListener("click", morceauSuivant);
   $("mini-ouvrir").addEventListener("click", () => ouvrirFiche(lecteur.piece));
 
+  // ce que les autres modules de l'appli peuvent utiliser (profil, partage, réglages : voir plus.js)
+  window.AH = { S, sauver, PIECES, ENR, COULEURS, FR, maListe, palier, niveauxTouches, rendreAccueil, aller, toast };
   rendreAccueil();
   majTout();
 })();
