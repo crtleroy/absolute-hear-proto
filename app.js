@@ -928,12 +928,12 @@
       zone.querySelectorAll(`[data-pc="${pc(p)}"]`).forEach((t) => t.classList.add("cible"));
       if (!juste) el.classList.add("erreur");
     }
-    if (q.T === DERNIER) { q.gain = juste ? pts : 0; return conclure(juste, 1100); }
+    if (q.T === DERNIER) { q.gain = juste ? pts : 0; return conclure(juste, 250); }
     q.bonus = juste ? pts : 0;
     q.noteJuste = juste;
-    conclure(true, 1100);
+    conclure(true, 250);
   }
-  function conclure(juste, delai = 700) { // delai : attente avant la fiche de résultat
+  function conclure(juste, delai = 250) { // delai : attente avant la fiche de résultat
     q.fini = true;
     majEnjeu();
     const p = q.p, avant = q.T, seule = q.T === DERNIER;
@@ -947,7 +947,7 @@
     S.points += gain;
     run.score += gain;
     const rate = !juste || (!seule && !q.noteJuste); // une erreur, sur le morceau ou sur la note
-    if (rate) { run.vies -= 0.5; briserCoeur(run.vies); delai += 1300; }
+    if (rate) { run.vies -= 0.5; briserCoeur(run.vies); delai += 650; }
     sauver();
     majStatut();
     $("enjeu").innerHTML = juste ? `<b>+${gain}</b>` : "";
