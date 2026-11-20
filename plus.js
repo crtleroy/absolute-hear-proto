@@ -359,7 +359,7 @@
     };
     function image(maintenant) {
       const ratio = Math.min(2, window.devicePixelRatio || 1), L = toile.clientWidth, H = toile.clientHeight;
-      if (toile.width !== Math.round(L * ratio)) { toile.width = Math.round(L * ratio); toile.height = Math.round(H * ratio); }
+      if (toile.width !== Math.round(L * ratio) || toile.height !== Math.round(H * ratio)) { toile.width = Math.round(L * ratio); toile.height = Math.round(H * ratio); }
       ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
       ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1; ctx.shadowBlur = 0;
       ctx.clearRect(0, 0, L, H);
