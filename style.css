@@ -446,3 +446,4 @@ p { margin: 0; }
 .grand-clavier.trois-d canvas { display: block; width: 100%; height: 100%; }
 .grand-clavier.trois-d { height: 250px; }
 .grand-clavier.trois-d canvas { mix-blend-mode: screen; } /* le noir du rendu laisse voir l'écran : seule la lumière s'ajoute */
+.grand-clavier.trois-d { height: 210px; }
