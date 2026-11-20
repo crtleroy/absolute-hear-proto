@@ -12,7 +12,7 @@
 
   /* ---------- règles du jeu ---------- */
   const DEPART = 2; // morceaux dans la liste au tout début
-  const VIES = 1; // un seul cœur : une erreur sur le morceau le coûte en entier, une erreur sur la note en coûte la moitié
+  const VIES = 1; // un seul cœur, en deux moitiés : on a droit à une erreur, la seconde termine la partie
   const PALIERS = ["2 choix", "4 choix", "compositeur, morceau", "compositeur, type, numéro", "la note seule"]; // échelle du morceau
   const NIVEAUX_NOTE = 3; // échelle de la note : 2 notes, 4 notes, puis le clavier
   const DERNIER = PALIERS.length - 1;
@@ -534,7 +534,9 @@
       const t = (maintenant - t0) / 1000, tc = (maintenant - choc) / 1000;
       const R = Math.hypot(L, H) * 0.62, r0 = Math.min(med.width, med.height) / 2;
       const lueur = ctx.createRadialGradient(cx, cy, r0, cx, cy, R * 0.8);
-      lueur.addColorStop(0, melanger(teinteNote, "#16141d", 0.45));
+      const arc = teinteNote === "arc"; // mode arc-en-ciel : chaque onde prend la couleur d'une note
+      const fondu = arc ? COULEURS[Math.floor(t * 0.7) % 12] : teinteNote;
+      lueur.addColorStop(0, melanger(fondu, "#16141d", 0.45));
       lueur.addColorStop(1, "rgba(22,20,29,0)");
       ctx.globalCompositeOperation = "source-over";
       ctx.fillStyle = lueur;
@@ -554,20 +556,20 @@
             const x = cx + Math.cos(th) * r * d, y = cy + Math.sin(th) * r * d;
             if (a) ctx.lineTo(x, y); else ctx.moveTo(x, y);
           }
-          ctx.strokeStyle = melanger(clair, teinteNote, k * 0.9);
+          ctx.strokeStyle = arc ? COULEURS[(i * 5 + lobes) % 12] : melanger(clair, teinteNote, k * 0.9);
           ctx.globalAlpha = force * 0.75;
           ctx.lineWidth = 0.5 + 1.3 * (1 - k);
           ctx.stroke();
         }
       };
-      anneaux(34, 0.045, 3, 0, melanger(teinteNote, "#ffffff", 0.75)); // tout l'écran est à la couleur de la note
-      anneaux(26, -0.03, 5, 2.1, melanger(teinteNote, "#ffffff", 0.3));
+      anneaux(34, 0.045, 3, 0, arc ? "" : melanger(teinteNote, "#ffffff", 0.75)); // tout l'écran est à la couleur de la note
+      anneaux(26, -0.03, 5, 2.1, arc ? "" : melanger(teinteNote, "#ffffff", 0.3));
       if (tc > 0 && tc < 1.6) { // onde de choc
         const k = 1 - Math.pow(1 - tc / 1.6, 3);
         for (let j = 0; j < 4; j++) {
           ctx.beginPath();
           ctx.arc(cx, cy, r0 + k * R * (1 - j * 0.07), 0, Math.PI * 2);
-          ctx.strokeStyle = j ? teinteNote : "#fffaf0";
+          ctx.strokeStyle = j ? (arc ? COULEURS[(j * 3) % 12] : teinteNote) : "#fffaf0";
           ctx.globalAlpha = (1 - k) * (1 - j * 0.2);
           ctx.lineWidth = (10 - j * 2) * (1 - k) + 0.6;
           ctx.stroke();
@@ -697,7 +699,25 @@
     document.dispatchEvent(new CustomEvent("ah:accueil")); // retour d'une partie : c'est là que peut passer une publicité
   });
 
-  const coeurs = (v) => Array.from({ length: VIES }, (_, i) => `<span class="${v >= i + 1 ? "" : v > i ? "demi" : "perdue"}">♥</span>`).join("");
+  /* Le cœur, dessiné en deux moitiés. v = 1 : entier ; 0,5 : il reste la moitié gauche ; 0 : plus rien. */
+  const TRACE_COEUR = "M12 21s-7.5-4.6-9.6-9.3C.9 8.2 2.6 4.5 6.2 4.5c2.2 0 3.9 1.1 5.8 3.4 1.9-2.3 3.6-3.4 5.8-3.4 3.6 0 5.3 3.7 3.8 7.2C19.5 16.4 12 21 12 21z";
+  const dessinCoeur = (classe) => `<svg class="coeur ${classe}" viewBox="0 0 24 24"><g class="moitie gauche"><path d="${TRACE_COEUR}" clip-path="inset(0 50% 0 0)"/></g><g class="moitie droite"><path d="${TRACE_COEUR}" clip-path="inset(0 0 0 50%)"/></g></svg>`;
+  const coeurs = (v) => dessinCoeur(v >= 1 ? "entier" : v > 0 ? "demi" : "vide");
+  /* Une erreur : le cœur apparaît en grand, tremble, puis une moitié éclate en couleurs. */
+  function briserCoeur(restant) {
+    document.querySelectorAll(".coeur-brise").forEach((e) => e.remove());
+    const el = document.createElement("div");
+    el.className = "coeur-brise " + (restant > 0 ? "premiere" : "derniere");
+    let eclats = "";
+    for (let i = 0; i < 26; i++) {
+      const angle = (restant > 0 ? -70 : 110) + Math.random() * 140, dist = 70 + Math.random() * 150;
+      eclats += `<i style="--x:${(Math.cos((angle * Math.PI) / 180) * dist).toFixed(0)}px;--y:${(Math.sin((angle * Math.PI) / 180) * dist).toFixed(0)}px;--c:${COULEURS[Math.floor(Math.random() * 12)]};--r:${(Math.random() * 540 - 270).toFixed(0)}deg;--t:${(6 + Math.random() * 10).toFixed(0)}px;--d:${(Math.random() * 0.12).toFixed(2)}s"></i>`;
+    }
+    el.innerHTML = dessinCoeur(restant > 0 ? "entier" : "demi") + `<div class="eclats">${eclats}</div>`;
+    $("app").appendChild(el);
+    if (S.reglages && S.reglages.vibration && navigator.vibrate) { try { navigator.vibrate([30, 40, 80]); } catch (e) { /* ignoré */ } }
+    setTimeout(() => el.remove(), 1900);
+  }
   function majStatut() {
     $("vies").innerHTML = coeurs(run.vies);
     $("avance").textContent = `${Math.min(run.i + 1, run.file.length)} / ${run.file.length}`;
@@ -855,7 +875,7 @@
     q.noteJuste = juste;
     conclure(true, 1100);
   }
-  function conclure(juste, delai = 700) {
+  function conclure(juste, delai = 700) { // delai : attente avant la fiche de résultat
     q.fini = true;
     majEnjeu();
     const p = q.p, avant = q.T, seule = q.T === DERNIER;
@@ -868,15 +888,13 @@
     if (!juste) delete S.acquis[p.id];
     S.points += gain;
     run.score += gain;
-    if (!juste) run.vies -= seule ? 0.5 : 1; // au dernier palier, l'erreur porte sur la note
-    else if (!seule && !q.noteJuste) run.vies -= 0.5;
+    const rate = !juste || (!seule && !q.noteJuste); // une erreur, sur le morceau ou sur la note
+    if (rate) { run.vies -= 0.5; briserCoeur(run.vies); delai += 1300; }
     sauver();
     majStatut();
     $("enjeu").innerHTML = juste ? `<b>+${gain}</b>` : "";
     document.dispatchEvent(new CustomEvent("ah:reponse", { detail: { juste, palier: avant, temps: (performance.now() - q.debut) / 1000 } }));
-    const parts = !juste ? [{ txt: seule ? "−½ vie" : "−1 vie" }]
-      : seule ? [{ txt: `note +${q.gain}` }]
-      : [{ txt: `morceau +${q.gain}` }, q.noteJuste ? { txt: `note +${q.bonus}` } : { txt: "note : −½ vie" }];
+    const parts = !juste ? [] : seule ? [] : [{ txt: `morceau +${q.gain}` }, q.noteJuste ? { txt: `note +${q.bonus}` } : { txt: "note", non: true }];
     const resultat = { juste, gain, parts, avant, apres, acquis: juste && seule };
     setTimeout(() => { apercu(p).catch(() => {}); ouvrirFiche(p, resultat, suivante); }, delai);
   }
@@ -924,7 +942,7 @@
     compter($("fin-score"), run.score, "", 1400, 700);
     $("rejouer").textContent = aDevoiler ? "Découvrir mon nouveau morceau" : "Continuer";
     fete.arreter();
-    if (victoire) fete.lancer("#e9c27a", $("fin-score"));
+    if (victoire) fete.lancer("arc", $("fin-score"));
     majTout();
   }
   function devoiler() {

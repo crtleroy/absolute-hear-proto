@@ -605,3 +605,41 @@ p { margin: 0; }
 @keyframes neon-lueur { 0%, 100% { opacity: 0; } 22% { opacity: 0; } 23% { opacity: .95; } 25% { opacity: .05; } 27% { opacity: .85; } 31% { opacity: 0; }
   63% { opacity: 0; } 64% { opacity: 1; } 66% { opacity: .1; } 67% { opacity: .9; } 72% { opacity: .8; } 73% { opacity: 0; } 88% { opacity: 0; } 89% { opacity: .6; } 90% { opacity: 0; } }
 .grand-clavier .neuf.eveil { animation: eclat 1.3s ease-out backwards !important; }
+
+/* ================= le cœur en deux moitiés ================= */
+.vies { display: flex; align-items: center; }
+.coeur { width: 30px; height: 30px; display: block; overflow: visible; }
+.coeur path { fill: #ff5d73; }
+.coeur.demi .droite path, .coeur.vide path { fill: rgba(255, 255, 255, .14); }
+.coeur .gauche { filter: drop-shadow(0 0 5px rgba(255, 93, 115, .7)); }
+.coeur.vide .gauche { filter: none; }
+.fin-vies .coeur { width: 44px; height: 44px; }
+.coeur-brise { position: absolute; inset: 0; z-index: 60; display: grid; place-items: center; pointer-events: none; background: radial-gradient(circle at 50% 46%, rgba(15, 14, 20, .82), rgba(15, 14, 20, 0) 62%); animation: coeur-voile 1.9s ease both; }
+@keyframes coeur-voile { from { opacity: 0; } 12% { opacity: 1; } 80% { opacity: 1; } to { opacity: 0; } }
+.coeur-brise .coeur { width: 150px; height: 150px; grid-area: 1 / 1; animation: coeur-entre .35s cubic-bezier(.2, 1.6, .4, 1) both, coeur-tremble .5s linear .35s; }
+.coeur-brise .coeur path { fill: #ff5d73; }
+.coeur-brise .coeur.demi .droite { display: none; }
+.coeur-brise .gauche, .coeur-brise .droite { transform-box: fill-box; transform-origin: center; }
+@keyframes coeur-entre { from { transform: scale(.2); opacity: 0; } }
+@keyframes coeur-tremble { 0%, 100% { transform: translate(0, 0) rotate(0); } 12% { transform: translate(-7px, 2px) rotate(-5deg); } 25% { transform: translate(6px, -2px) rotate(4deg); } 38% { transform: translate(-6px, -1px) rotate(-4deg); }
+  50% { transform: translate(7px, 2px) rotate(5deg); } 63% { transform: translate(-5px, 1px) rotate(-3deg); } 76% { transform: translate(5px, -1px) rotate(3deg); } 88% { transform: translate(-3px, 0) rotate(-2deg); } }
+/* première erreur : la moitié droite éclate ; seconde erreur : la moitié restante éclate à son tour */
+.coeur-brise.premiere .droite { animation: moitie-part .7s cubic-bezier(.3, 0, .8, .6) .85s both; }
+.coeur-brise.derniere .gauche { animation: moitie-part-g .7s cubic-bezier(.3, 0, .8, .6) .85s both; }
+@keyframes moitie-part { to { transform: translate(40px, 34px) rotate(38deg) scale(.5); opacity: 0; } }
+@keyframes moitie-part-g { to { transform: translate(-40px, 34px) rotate(-38deg) scale(.5); opacity: 0; } }
+.eclats { grid-area: 1 / 1; position: relative; width: 0; height: 0; }
+.eclats i { position: absolute; left: 0; top: 0; width: var(--t); height: calc(var(--t) * .55); margin: calc(var(--t) / -2); border-radius: 2px; background: var(--c); box-shadow: 0 0 10px var(--c); opacity: 0;
+  animation: eclat-vole .95s cubic-bezier(.1, .7, .3, 1) calc(.85s + var(--d)) both; }
+@keyframes eclat-vole { from { transform: translate(0, 0) rotate(0) scale(.4); opacity: 1; } 70% { opacity: 1; } to { transform: translate(var(--x), var(--y)) rotate(var(--r)) scale(1); opacity: 0; } }
+/* ================= bilan en arc-en-ciel ================= */
+.fin.bilan.reussie .score-fin b { background: linear-gradient(90deg, #f04c4c, #f0d44c, #4cf06e, #4cc3f0, #9a4cf0, #f04cc3); -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: none; filter: drop-shadow(0 0 22px rgba(255, 255, 255, .35)); }
+.fin.bilan.reussie .surtitre { background: linear-gradient(90deg, #f04c4c, #f0d44c, #4cf06e, #4cc3f0, #9a4cf0); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.fin.bilan.reussie .record { background: linear-gradient(90deg, #f0d44c, #4cf06e, #4cc3f0); color: #14121a; }
+/* ================= courbes du profil ================= */
+.courbes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.courbes > div { padding: 12px 14px 0; border-radius: 20px; background: var(--surface); overflow: hidden; }
+.courbes small { display: block; color: var(--discret); font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; }
+.courbes b { display: block; font-family: var(--titre); font-size: 1.6rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.courbes b i { font-style: normal; font-size: .85rem; color: var(--discret); font-family: "Inter", sans-serif; font-weight: 400; }
+.courbe { display: block; width: calc(100% + 28px); margin: 6px -14px 0; height: 46px; }

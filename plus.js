@@ -38,6 +38,9 @@
     S.stats.parties++;
     if (e.detail.victoire) S.stats.victoires++;
     S.stats.jours[jour()] = (S.stats.jours[jour()] || 0) + 1;
+    // une ligne d'historique par partie : le score, et la progression d'ensemble (somme des paliers de toutes les notes)
+    const niv = Object.values(AH.niveauxTouches());
+    S.stats.historique = (S.stats.historique || []).concat([[e.detail.score, Math.round((1000 * niv.reduce((x, n) => x + n, 0)) / (88 * 5)) / 10]]).slice(-60);
     // une publicité est due si le joueur n'est pas abonné, que la partie a duré, et que la précédente n'est pas trop récente
     pubDue = !S.profil.premium && (Date.now() - debutPartie) / 1000 >= PUB.partieMin && (Date.now() - dernierePub) / 1000 >= PUB.delaiMin;
     AH.sauver();
@@ -170,12 +173,23 @@
   }
   const A_REDIGER = "<p>Texte à rédiger avant la mise en ligne.</p>";
 
+  /* Une petite courbe, sans axes ni légende : la forme suffit. */
+  function courbe(valeurs, couleurs) {
+    if (valeurs.length < 2) return '<svg class="courbe" viewBox="0 0 100 34" preserveAspectRatio="none"><line x1="0" y1="30" x2="100" y2="30" stroke="rgba(255,255,255,.15)" stroke-width="1" stroke-dasharray="2 3"/></svg>';
+    const mini = Math.min(...valeurs), maxi = Math.max(...valeurs), plage = maxi - mini || 1, id = "g" + Math.random().toString(36).slice(2, 7);
+    const pts = valeurs.map((v, i) => [(100 * i) / (valeurs.length - 1), 30 - (26 * (v - mini)) / plage]);
+    const trait = pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ");
+    return `<svg class="courbe" viewBox="0 0 100 34" preserveAspectRatio="none"><defs><linearGradient id="${id}" x1="0" x2="1">${couleurs.map((c, i) => `<stop offset="${i / (couleurs.length - 1)}" stop-color="${c}"/>`).join("")}</linearGradient></defs>
+      <path d="${trait} L100 34 L0 34 Z" fill="url(#${id})" opacity=".16"/><path d="${trait}" fill="none" stroke="url(#${id})" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>`;
+  }
+
   let ecranProfil = false;
   function rendreProfil() {
     const liste = AH.maListe(), acquises = liste.filter((p) => S.acquis[p.id]).length;
     const precision = S.stats.reponses ? Math.round((100 * S.stats.justes) / S.stats.reponses) : 0;
     const tempsMoyen = S.stats.reponses ? (S.stats.temps / S.stats.reponses).toFixed(1) : "–";
     const enr = Object.values(AH.ENR), cree = S.profil.cree;
+    const histo = S.stats.historique || [];
     $("ecran-profil").innerHTML = `
       <div class="profil-defile">
         <div class="carte-profil">
@@ -197,6 +211,11 @@
           <div><b>${S.stats.parties}</b><small>parties</small></div>
           <div><b>${precision}<i> %</i></b><small>précision</small></div>
           <div><b>${tempsMoyen}<i> s</i></b><small>par réponse</small></div>
+        </div>
+
+        <div class="courbes">
+          <div><small>score</small><b>${histo.length ? histo[histo.length - 1][0] : "–"}</b>${courbe(histo.map((h) => h[0]), ["#e9c27a", "#fff3d6"])}</div>
+          <div><small>progression</small><b>${histo.length ? histo[histo.length - 1][1] + "<i> %</i>" : "–"}</b>${courbe(histo.map((h) => h[1]), [AH.COULEURS[0], AH.COULEURS[2], AH.COULEURS[4], AH.COULEURS[7], AH.COULEURS[9], AH.COULEURS[11]])}</div>
         </div>
 
         <button id="partager" class="ligne fort"><b>Partager mon clavier</b></button>
