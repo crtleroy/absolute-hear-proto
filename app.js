@@ -33,7 +33,20 @@
   const couleur = (p) => COULEURS[p.midis[0] % 12];
   const sci = (m) => EN[m % 12] + (Math.floor(m / 12) - 1);
   const pc = (p) => p.midis[0] % 12;
-  const nomCourt = (p) => FR[pc(p)];
+  /* Le nom d'une note dépend de la tonalité du morceau : la Valse op. 64 n°2, en do dièse mineur, commence par un sol dièse
+     et non par un la bémol. Chaque morceau porte donc l'orthographe exacte de sa première note, lue dans sa partition (p.orth),
+     et son armure (p.armure) : les autres notes proposées s'écrivent en dièses ou en bémols selon elle. */
+  const PAS = { C: "do", D: "ré", E: "mi", F: "fa", G: "sol", A: "la", B: "si" };
+  const ALTERATION = { "-2": "𝄫", "-1": "♭", 0: "", 1: "♯", 2: "𝄪" };
+  const GAMMES = {
+    fr: { dieses: ["do", "do♯", "ré", "ré♯", "mi", "fa", "fa♯", "sol", "sol♯", "la", "la♯", "si"], bemols: ["do", "ré♭", "ré", "mi♭", "mi", "fa", "sol♭", "sol", "la♭", "la", "si♭", "si"] },
+    en: { dieses: ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"], bemols: ["C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭", "A", "B♭", "B"] },
+  };
+  const langue = () => (S.reglages && S.reglages.notation === "en" ? "en" : "fr");
+  const nomCourt = (p) => (p.orth ? (langue() === "en" ? p.orth[0] : PAS[p.orth[0]]) + ALTERATION[p.orth[1]] : FR[pc(p)]);
+  const noteExacte = (p) => (p.orth ? p.orth[0] + ALTERATION[p.orth[1]] + p.orth[2] : sci(p.midis[0]));
+  /* nom d'une autre note, écrite dans la tonalité du morceau p */
+  const nomDans = (v, p) => (v === pc(p) ? nomCourt(p) : GAMMES[langue()][p.armure < 0 ? "bemols" : "dieses"][v]);
   const nomLong = (p) => (p.midis.length > 1 ? `${FR[pc(p)]} en octaves · ${p.midis.map(sci).join(" + ")}` : `${FR[pc(p)]} · ${sci(p.midis[0])}`);
   const melange = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
   const uniques = (a) => [...new Set(a)];
@@ -341,7 +354,7 @@
       }, 700);
     }
     $("f-pastille").textContent = nomCourt(p);
-    $("f-note").textContent = p.midis.map(sci).join(" + ");
+    $("f-note").textContent = noteExacte(p);
     $("f-titre").textContent = p.titre;
     $("f-comp").textContent = p.compositeur;
     grandClavier($("f-clavier"), niveauxTouches(), p.midis);
@@ -774,7 +787,7 @@
       // d'abord 2 notes au choix, puis 4 ; les mauvaises réponses sont des notes voisines
       const autres = melange([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]).slice(0, q.N === 0 ? 1 : 3).map((d) => (pc(p) + d) % 12);
       const liste = melange([pc(p), ...autres]);
-      options(zone, q.N === 0 ? "deux" : "quatre", liste, (v) => `<b style="color:${COULEURS[v]}">${FR[v]}</b>`, (v, b) => repondreNote(v, b));
+      options(zone, q.N === 0 ? "deux" : "quatre", liste, (v) => `<b style="color:${COULEURS[v]}">${nomDans(v, p)}</b>`, (v, b) => repondreNote(v, b));
       [...zone.children].forEach((b, i) => { b.dataset.juste = liste[i] === pc(p) ? "1" : ""; });
       return;
     }
@@ -927,7 +940,7 @@
     document.querySelector(".score-fin").hidden = true;
     $("fin-carte").hidden = false;
     $("fin-pastille").textContent = nomCourt(nouveau);
-    $("fin-touche").textContent = `nouvelle touche · ${sci(nouveau.midis[0])}`;
+    $("fin-touche").textContent = `nouvelle touche · ${noteExacte(nouveau)}`;
     $("fin-comp").textContent = nouveau.compositeur;
     $("fin-morceau").textContent = nouveau.titre;
     $("fin-pastille").onclick = () => { fete.eclat(); extrait(nouveau, 1).catch(() => {}); };
