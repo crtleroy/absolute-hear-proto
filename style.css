@@ -327,3 +327,32 @@ p { margin: 0; }
 .record { display: inline-block; margin-bottom: 10px; padding: 5px 14px; border-radius: 999px; background: var(--or); color: var(--or-fonce); font-size: .72rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
   animation: eclate-score .7s cubic-bezier(.2, 1.7, .4, 1) 2.1s both, pulse-or 1.4s ease-out 2.8s 3; }
 .fin .grand { margin-top: 18px; }
+
+/* ================= écran de validation épuré : plein écran, à la couleur de la note, la partition en filigrane ================= */
+.feuille-panneau { top: 0; max-height: none; border-radius: 0; border: 0; padding: 0; overflow: hidden; animation: fondu .35s;
+  background: radial-gradient(120% 70% at 50% 34%, color-mix(in srgb, var(--c, var(--or)) 42%, #16141d), #16141d 70%, var(--encre)); }
+.partition-fond { position: absolute; left: -6%; right: -6%; top: 6%; height: 52%; overflow: hidden; pointer-events: none; opacity: .2; filter: invert(1);
+  -webkit-mask-image: linear-gradient(180deg, #000 30%, transparent 96%); mask-image: linear-gradient(180deg, #000 30%, transparent 96%); }
+.f-contenu { position: relative; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 22px 22px calc(20px + env(safe-area-inset-bottom)); text-align: center; }
+.f-resultat { margin: auto 0 18px; }
+.f-points { font-size: 4.4rem; color: color-mix(in srgb, var(--c, var(--or)) 40%, #fff); text-shadow: 0 0 34px color-mix(in srgb, var(--c, var(--or)) 80%, transparent); }
+.f-points.rate { color: var(--faux); font-size: 2.6rem; text-shadow: none; }
+.f-detail { display: block; margin: 8px 0 14px; color: color-mix(in srgb, var(--c, var(--or)) 35%, #fff); opacity: .75; font-size: .85rem; letter-spacing: .04em; font-variant-numeric: tabular-nums; }
+.pips { display: inline-flex; gap: 8px; }
+.pips i { width: 9px; height: 9px; border-radius: 50%; background: rgba(255, 255, 255, .18); transition: none; }
+.pips i.ok { background: var(--c, var(--or)); box-shadow: 0 0 10px var(--c, var(--or)); }
+.pips i.bouge { animation: pip .8s cubic-bezier(.2, 1.8, .4, 1); }
+@keyframes pip { from { transform: scale(3.2); background: #fff; box-shadow: 0 0 22px #fff; } }
+.feuille-panneau .medaillon.moyen { width: 128px; height: 128px; font-size: 2.6rem; margin: 0; }
+.feuille-panneau .fin-touche { margin-top: 16px; }
+.feuille-panneau h2 { font-size: 1.8rem; margin-top: 4px; color: color-mix(in srgb, var(--c, var(--or)) 55%, #fff); }
+.f-comp { color: #fff; opacity: .75; margin-bottom: 18px; }
+.feuille-panneau .clavier-plein { align-self: stretch; height: 58px; margin: 0 -22px 18px; }
+.f-actions { display: flex; align-items: center; gap: 12px; align-self: stretch; }
+.f-actions .rond { width: 58px; height: 58px; background: rgba(255, 255, 255, .12); color: #fff; }
+.f-actions .bouton.plein { flex: 1; min-height: 58px; border-radius: 22px; font-size: 1.05rem; background: var(--c, var(--or)); color: #14121a; }
+.credit { font-size: .7rem; margin: -8px 0 12px; }
+
+/* nettoyage d'oreille */
+.rincage { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 15; background: radial-gradient(120% 70% at 50% 40%, #1d1a29, var(--encre)); }
+.partition-fond { top: 3%; height: 33%; opacity: .16; }

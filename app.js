@@ -255,10 +255,9 @@
       if (fiche.piece !== p) return;
       const osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay(zone, { autoResize: false, drawTitle: false, drawSubtitle: false, drawComposer: false, drawLyricist: false, drawPartNames: false, drawingParameters: "compacttight" });
       await osmd.load(xml);
-      osmd.zoom = 0.75;
+      osmd.zoom = 1;
       osmd.render();
-      osmd.cursor.show();
-    } catch (e) { zone.textContent = "Partition indisponible."; console.error("partition", p.titre, e); }
+    } catch (e) { zone.innerHTML = ""; console.error("partition", p.titre, e); }
   }
 
   /* ---------- navigation ---------- */
@@ -314,29 +313,23 @@
       pts.className = "f-points" + (resultat.juste ? "" : " rate");
       pts.textContent = resultat.juste ? "+" + resultat.gain : "Raté";
       if (resultat.juste) compter(pts, resultat.gain);
-      $("f-detail").innerHTML = resultat.parts.map((x) => `<span class="${x.non ? "non" : ""}">${x.txt}</span>`).join("");
-      const zp = $("f-palier");
-      zp.className = "f-palier";
-      $("f-niv-avant").textContent = resultat.avant + 1;
-      $("f-niv-apres").textContent = resultat.apres + 1;
-      $("f-palier-nom").textContent = resultat.acquis ? "note acquise" : PALIERS[resultat.apres];
-      const pips = (n) => [0, 1, 2, 3, 4].map((i) => `<i class="${n >= i ? "ok" : ""}"></i>`).join("");
-      $("f-pips").innerHTML = pips(resultat.avant);
+      $("f-detail").textContent = resultat.parts.filter((x) => !x.non).map((x) => x.txt).join("  ·  ");
+      // le palier : cinq points, celui qui vient d'être gagné (ou perdu) s'anime
+      const pips = (n, marque) => [0, 1, 2, 3, 4].map((i) => `<i class="${n >= i ? "ok" : ""}${i === marque ? " bouge" : ""}"></i>`).join("");
+      $("f-pips").innerHTML = pips(resultat.avant, -1);
       if (resultat.apres !== resultat.avant) setTimeout(() => {
-        if (fiche.piece !== p) return;
-        zp.classList.add(resultat.apres > resultat.avant ? "monte" : "baisse");
-        $("f-pips").innerHTML = pips(resultat.apres);
-      }, 650);
+        if (fiche.piece === p) $("f-pips").innerHTML = pips(resultat.apres, Math.max(resultat.avant, resultat.apres));
+      }, 700);
     }
     $("f-pastille").textContent = nomCourt(p);
-    $("f-note").textContent = p.midis.length > 1 ? `en octaves · ${p.midis.map(sci).join(" + ")}` : sci(p.midis[0]);
+    $("f-note").textContent = p.midis.map(sci).join(" + ");
     $("f-titre").textContent = p.titre;
     $("f-comp").textContent = p.compositeur;
     const bas = Math.max(21, Math.floor((Math.min(...p.midis) - 5) / 12) * 12);
     const haut = Math.min(108, Math.max(bas + 23, Math.ceil((Math.max(...p.midis) + 6) / 12) * 12 - 1));
     clavierPlein($("f-clavier"), bas, haut, p.midis);
     const e = ENR[p.titre];
-    $("f-credit").textContent = e ? `Enregistrement : ${e.interprete || "interprète non précisé"} · ${e.licence}` : "Écoute en rendu synthétique";
+    $("f-credit").textContent = resultat ? "" : e ? `Enregistrement : ${e.interprete || "interprète non précisé"} · ${e.licence}` : "Écoute en rendu synthétique";
     $("f-suite").textContent = suite ? "Continuer" : "Fermer";
     $("feuille").hidden = false;
     majFiche();
@@ -358,7 +351,7 @@
   }
   function majFiche() {
     const p = fiche.piece;
-    if (p) $("f-lecture").textContent = lecteur.piece === p && lecteur.joue && !lecteur.pause ? "❚❚ Pause" : "▶ Écouter";
+    if (p) $("f-lecture").innerHTML = lecteur.piece === p && lecteur.joue && !lecteur.pause ? ICONE.pause : ICONE.lire;
   }
   function fermerFiche() {
     $("feuille").hidden = true;
@@ -498,6 +491,64 @@
       arreter() { actif = false; cancelAnimationFrame(id); ctx.clearRect(0, 0, toile.width, toile.height); },
     };
   })();
+
+  /* ---------- nettoyage d'oreille : trois secondes de notes au hasard, chacune éclatant dans sa couleur ---------- */
+  function rincer(duree = 3000) {
+    const toile = $("rincage"), ctx = toile.getContext("2d");
+    toile.hidden = false;
+    const ratio = Math.min(2, window.devicePixelRatio || 1);
+    const L = toile.clientWidth, H = toile.clientHeight;
+    toile.width = Math.round(L * ratio);
+    toile.height = Math.round(H * ratio);
+    const impacts = [], debut = performance.now();
+    let dernier = -1, id = 0;
+    const note = () => { // cinq notes par seconde, sur tout le clavier utile
+      const m = 36 + Math.floor(Math.random() * 54);
+      impacts.push({ x: L * (0.1 + 0.8 * Math.random()), y: H * (0.12 + 0.76 * Math.random()), t0: performance.now(), c: COULEURS[m % 12], g: Math.random() * 6, taille: 0.7 + Math.random() * 0.7 });
+      if (piano) { reveiller(); piano.triggerAttackRelease(Tone.Frequency(m, "midi").toFrequency(), 0.3, undefined, 0.4); }
+    };
+    const rythme = setInterval(() => { if (performance.now() - debut < duree - 150) note(); }, 200);
+    note();
+    function image(maintenant) {
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      ctx.clearRect(0, 0, L, H);
+      ctx.globalCompositeOperation = "lighter";
+      for (const im of impacts) {
+        const a = (maintenant - im.t0) / 1000, vie = 1.5;
+        if (a > vie) continue;
+        const k = 1 - Math.pow(1 - a / vie, 2.2);
+        for (let j = 0; j < 6; j++) {
+          const r = k * 150 * im.taille * (1 - j * 0.15);
+          ctx.beginPath();
+          for (let n = 0; n <= 72; n++) {
+            const th = (n / 72) * Math.PI * 2;
+            const d = 1 + k * (0.07 * Math.sin(4 * th + im.g + j * 0.7) + 0.035 * Math.sin(9 * th - a * 2.5 + im.g));
+            const x = im.x + Math.cos(th) * r * d, y = im.y + Math.sin(th) * r * d;
+            if (n) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+          }
+          ctx.strokeStyle = im.c;
+          ctx.globalAlpha = (1 - a / vie) * (1 - j * 0.13);
+          ctx.lineWidth = 0.6 + 1.6 * (1 - k);
+          ctx.stroke();
+        }
+        ctx.beginPath();
+        ctx.arc(im.x, im.y, 5 + 26 * k * im.taille, 0, Math.PI * 2);
+        ctx.fillStyle = im.c;
+        ctx.globalAlpha = Math.max(0, 0.55 - a * 1.6);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      id = requestAnimationFrame(image);
+    }
+    id = requestAnimationFrame(image);
+    return new Promise((ok) => setTimeout(() => {
+      clearInterval(rythme);
+      cancelAnimationFrame(id);
+      if (piano) piano.releaseAll();
+      toile.hidden = true;
+      ok();
+    }, duree + 500));
+  }
 
   /* ---------- la partie ---------- */
   async function lancer() {
@@ -688,8 +739,9 @@
     enTransition = true;
     $("partie").classList.add("entracte");
     await fondre(350);
-    await attendre(ENTRACTE);
     run.i++;
+    // avant un nouveau morceau : on « nettoie l'oreille », pour ne pas deviner la note par comparaison avec la précédente
+    if (run.vies > 0 && run.i < run.file.length) { $("feuille").hidden = true; await rincer(); await attendre(450); } else await attendre(ENTRACTE);
     enTransition = false;
     if (run.vies <= 0) finir(false);
     else if (run.i >= run.file.length) finir(true);

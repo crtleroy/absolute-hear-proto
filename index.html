@@ -7,7 +7,7 @@
 <title>Absolute Hear</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=17">
+<link rel="stylesheet" href="style.css?v=19">
 </head>
 <body>
 <div id="app">
@@ -49,6 +49,8 @@
           <button id="aide-ecoute" class="cote"><b>♪♪♪</b><small>le début</small></button>
         </div>
       </div>
+
+      <canvas id="rincage" class="rincage" hidden aria-hidden="true"></canvas>
 
       <div id="fin" class="fin" hidden>
         <canvas id="fete" class="fete" aria-hidden="true"></canvas>
@@ -96,26 +98,23 @@
   <div id="feuille" class="feuille" hidden>
     <div id="feuille-fond" class="feuille-fond"></div>
     <div class="feuille-panneau">
-      <span class="poignee"></span>
-      <div id="f-resultat" class="f-resultat">
-        <p id="f-points" class="f-points"></p>
-        <p id="f-detail" class="f-detail"></p>
-        <div id="f-palier" class="f-palier">
-          <span class="badge"><i id="f-niv-avant"></i><i id="f-niv-apres"></i></span>
-          <span class="palier-texte"><small>palier</small><b id="f-palier-nom"></b></span>
+      <div id="f-partition" class="partition-fond" aria-hidden="true"></div>
+      <div class="f-contenu">
+        <div id="f-resultat" class="f-resultat">
+          <p id="f-points" class="f-points"></p>
+          <p id="f-detail" class="f-detail"></p>
           <span id="f-pips" class="pips"></span>
         </div>
-      </div>
-      <button id="f-pastille" class="medaillon moyen" aria-label="Écouter la note"></button>
-      <p id="f-note" class="fin-touche"></p>
-      <h2 id="f-titre"></h2>
-      <p id="f-comp" class="f-comp"></p>
-      <div id="f-clavier" class="clavier-plein"></div>
-      <div id="f-partition" class="partition"></div>
-      <p id="f-credit" class="credit"></p>
-      <div class="f-actions">
-        <button id="f-lecture" class="bouton">Écouter</button>
-        <button id="f-suite" class="bouton plein">Continuer</button>
+        <button id="f-pastille" class="medaillon moyen" aria-label="Écouter la note"></button>
+        <p id="f-note" class="fin-touche"></p>
+        <h2 id="f-titre"></h2>
+        <p id="f-comp" class="f-comp"></p>
+        <div id="f-clavier" class="clavier-plein"></div>
+        <p id="f-credit" class="credit"></p>
+        <div class="f-actions">
+          <button id="f-lecture" class="rond discret" aria-label="Lecture ou pause"></button>
+          <button id="f-suite" class="bouton plein">Continuer</button>
+        </div>
       </div>
     </div>
   </div>
@@ -125,8 +124,8 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.8.9/build/opensheetmusicdisplay.min.js"></script>
-<script src="data/enregistrements.js?v=17"></script>
-<script src="data/pieces.js?v=17"></script>
-<script src="app.js?v=17"></script>
+<script src="data/enregistrements.js?v=19"></script>
+<script src="data/pieces.js?v=19"></script>
+<script src="app.js?v=19"></script>
 </body>
 </html>
