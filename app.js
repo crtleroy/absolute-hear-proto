@@ -641,9 +641,23 @@
   }
   /* autres morceaux pour les mauvaises réponses : d'abord ceux de la liste, puis les suivants du catalogue */
   function leurres(p, n) {
-    const dans = melange(maListe().filter((x) => x !== p));
-    const hors = melange(PIECES.filter((x) => !S.liste.includes(x.id)).slice(0, 8));
-    return [...dans, ...hors].slice(0, n);
+    // Jamais un morceau déjà passé dans cette partie (on vient de l'entendre), et des compositeurs tous différents
+    // tant que c'est possible : « nocturne ou prélude de Chopin ? » est une question pour les paliers suivants.
+    const passes = run.file.slice(0, run.i);
+    const admis = (x) => x !== p && !passes.includes(x);
+    const viviers = [melange(maListe().filter(admis)), melange(PIECES.filter((x) => admis(x) && !S.liste.includes(x.id)))];
+    const choisis = [], vus = new Set([p.compositeur]);
+    for (const strict of [true, false]) {
+      for (const vivier of viviers) {
+        for (const x of vivier) {
+          if (choisis.length >= n) return choisis;
+          if (choisis.includes(x) || (strict && vus.has(x.compositeur))) continue;
+          choisis.push(x);
+          vus.add(x.compositeur);
+        }
+      }
+    }
+    return choisis;
   }
   function options(zone, classe, liste, rendu, surChoix) {
     zone.className = "reponses " + classe;

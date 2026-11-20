@@ -160,7 +160,7 @@
   const INTRO = [
     "Écouter la note",
     "Retrouver le morceau",
-    "Puis retrouver le nom de la note",
+    "Apprenez la note qui correspond",
     "Apprenez, recommencez, et obtenez l'oreille absolue !",
   ];
   const C = AH.COULEURS;
@@ -204,67 +204,104 @@
     ctx.restore();
   }
 
-  /* 1. Une note tombe, touche le centre, et son onde se répand. */
-  function scene1(ctx, L, H, t) {
-    const cycle = 2.8, u = (t % cycle) / cycle, coul = C[(Math.floor(t / cycle) * 5 + 10) % 12];
-    const cx = L / 2, cy = H * 0.4;
-    const y = u < 0.28 ? -60 + (cy + 60) * Math.pow(u / 0.28, 2) : cy - 14 * Math.exp(-(u - 0.28) * 9) * Math.abs(Math.sin((u - 0.28) * 22));
-    if (u >= 0.28) {
-      const k = (u - 0.28) / 0.72;
-      nappe(ctx, cx, cy, 60 + k * L * 0.9, coul, 0.42 * Math.pow(1 - k, 1.4));
-      for (let j = 0; j < 9; j++) anneau(ctx, cx, cy + 6, k * L * 0.95 - j * 24, coul, Math.pow(1 - k, 1.3) * (1 - j * 0.09), 1 + 1.6 * (1 - k), t, j);
-    }
-    noteDessin(ctx, cx - 6, y, 1.35, "#fffaf0");
-  }
-
-  /* 2. Des partitions de toutes les couleurs arrivent de partout et s'assemblent en pavage ; l'une d'elles s'illumine. */
-  function scene2(ctx, L, H, t) {
-    const cols = 4, rangs = 5, w = L / (cols + 0.5), h = w * 1.28, x0 = (L - cols * w) / 2 + w / 2, y0 = H * 0.06 + h / 2;
-    const cycle = 6, u = t % cycle, sortie = doux((u - 5.1) / 0.8), elue = 9;
-    for (let i = 0; i < cols * rangs; i++) {
-      const p = doux((u - 0.15 - i * 0.07) / 1.1) * (1 - sortie);
-      const tx = x0 + (i % cols) * w, ty = y0 + Math.floor(i / cols) * h * 0.86;
-      const sx = L / 2 + (alea(i, 1) - 0.5) * L * 2.4, sy = H * 0.4 + (alea(i, 2) - 0.5) * H * 1.8;
-      const x = sx + (tx - sx) * p, y = sy + (ty - sy) * p, rot = (alea(i, 3) - 0.5) * 3 * (1 - p), coul = C[(i * 5) % 12];
-      const choisie = i === elue ? doux((u - 2.6) / 0.6) * (1 - sortie) : 0, ech = 0.9 + 0.22 * choisie;
-      ctx.save();
-      ctx.translate(x, y); ctx.rotate(rot); ctx.scale(ech, ech);
-      ctx.globalAlpha = (0.14 + 0.5 * choisie) * (0.25 + 0.75 * p);
-      ctx.fillStyle = coul;
-      ctx.beginPath(); ctx.roundRect(-w * 0.44, -h * 0.4, w * 0.88, h * 0.8, 8); ctx.fill();
-      ctx.globalAlpha = (0.75 + 0.25 * choisie) * (0.2 + 0.8 * p);
-      ctx.strokeStyle = coul; ctx.lineWidth = 1.2 + choisie * 1.5;
-      if (choisie) { ctx.shadowColor = coul; ctx.shadowBlur = 26 * choisie; }
-      ctx.stroke();
-      ctx.shadowBlur = 0; ctx.lineWidth = 0.8;
-      for (let p2 = 0; p2 < 2; p2++) { // deux portées de cinq lignes, quelques notes
-        const py = -h * 0.2 + p2 * h * 0.36;
-        for (let l = 0; l < 5; l++) { ctx.beginPath(); ctx.moveTo(-w * 0.34, py + l * 3.4); ctx.lineTo(w * 0.34, py + l * 3.4); ctx.stroke(); }
-        ctx.fillStyle = choisie ? "#fff" : coul;
-        for (let n = 0; n < 5; n++) { ctx.beginPath(); ctx.ellipse(-w * 0.26 + n * w * 0.13, py + alea(i * 7 + n, p2 + 4) * 15 - 1, 2.6, 2, -0.3, 0, Math.PI * 2); ctx.fill(); }
+  /* Une petite partition stylisée : deux portées, quelques notes. */
+  function partitionDessin(ctx, w, h, coul, graine, force, premiere) {
+    ctx.globalAlpha = 0.13 + 0.5 * force;
+    ctx.fillStyle = coul;
+    ctx.beginPath(); ctx.roundRect(-w * 0.44, -h * 0.4, w * 0.88, h * 0.8, w * 0.07); ctx.fill();
+    ctx.globalAlpha = 0.7 + 0.3 * force;
+    ctx.strokeStyle = coul; ctx.lineWidth = Math.max(1, w * 0.012) * (1 + force);
+    ctx.shadowColor = coul; ctx.shadowBlur = 30 * force;
+    ctx.stroke();
+    ctx.shadowBlur = 0; ctx.lineWidth = Math.max(0.7, w * 0.008);
+    const pas = h * 0.028;
+    for (let p2 = 0; p2 < 2; p2++) {
+      const py = -h * 0.2 + p2 * h * 0.36;
+      for (let l = 0; l < 5; l++) { ctx.beginPath(); ctx.moveTo(-w * 0.34, py + l * pas); ctx.lineTo(w * 0.34, py + l * pas); ctx.stroke(); }
+      for (let n = 0; n < 5; n++) {
+        ctx.fillStyle = force > 0.5 || (premiere && p2 === 0 && n === 0) ? "#fff" : coul;
+        ctx.beginPath(); ctx.ellipse(-w * 0.26 + n * w * 0.13, py + alea(graine * 7 + n, p2 + 4) * pas * 4, w * 0.03, w * 0.022, -0.3, 0, Math.PI * 2); ctx.fill();
       }
-      ctx.restore();
     }
   }
 
-  /* 3. Les noms des notes flottent ; l'un après l'autre, ils viennent au centre. */
-  const NOMS = [["do", 0], ["ré", 2], ["mi", 4], ["fa", 5], ["sol", 7], ["la", 9], ["si", 11], ["do♯", 1], ["mi♭", 3], ["fa♯", 6], ["la♭", 8], ["si♭", 10], ["C", 0], ["D", 2], ["E", 4], ["F", 5], ["G", 7], ["A", 9], ["B", 11], ["F♯", 6], ["B♭", 10], ["sol", 7], ["ré", 2], ["la", 9]];
+  /* 1. La note arrive, se pose, puis reste là : c'est d'elle que partent les ondes, sans interruption. */
+  function scene1(ctx, L, H, t) {
+    const cx = L / 2, cy = H * 0.4, pose = 0.75;
+    const y = t < pose ? -80 + (cy + 80) * Math.pow(t / pose, 2) : cy + Math.sin((t - pose) * 1.5) * 7 - 18 * Math.exp(-(t - pose) * 5) * Math.abs(Math.sin((t - pose) * 12));
+    if (t > pose) {
+      const a = t - pose, monte = Math.min(1, a / 0.6);
+      nappe(ctx, cx, cy, L * 0.85, C[Math.floor(a / 2.4) % 12], 0.22 * monte);
+      for (let j = 0; j < 11; j++) { // onze ondes en route en permanence, chacune d'une couleur
+        const k = ((j / 11 + a * 0.16) % 1 + 1) % 1, gen = Math.floor(j / 11 + a * 0.16);
+        anneau(ctx, cx, cy + 4, 34 + k * L * 0.95, C[(gen * 11 + j * 5) % 12], Math.pow(1 - k, 1.4) * Math.min(1, k * 10) * monte, 1 + 1.8 * (1 - k), t, j);
+      }
+    }
+    ctx.save();
+    ctx.translate(cx - 6, y); ctx.rotate(Math.sin(t * 1.1) * 0.07);
+    noteDessin(ctx, 0, 0, 1.35, "#fffaf0");
+    ctx.restore();
+  }
+
+  /* 2. Un pavage de partitions, de biais, qui défile sans fin ; certaines scintillent : il y en a beaucoup, il faut trouver la bonne. */
+  function scene2(ctx, L, H, t) {
+    const w = L / 3.4, h = w * 1.28, pasX = w * 0.96, pasY = h * 0.86, glisse = t * 22;
+    ctx.save();
+    ctx.translate(L / 2, H * 0.36); ctx.rotate(-0.32);
+    const decale = Math.floor(glisse / pasX);
+    for (let r = -4; r <= 4; r++) {
+      for (let c = -4; c <= 4; c++) {
+        const col = c - decale, i = Math.abs(col * 31 + r * 17 + 500);
+        const x = c * pasX + (glisse % pasX) + (r % 2 ? pasX / 2 : 0), y = r * pasY;
+        const entree = doux((t - alea(i, 9) * 0.9) / 0.8);
+        const eclat = Math.pow(Math.max(0, Math.sin(t * 1.1 + alea(i, 3) * 60)), 10); // scintillement
+        ctx.save();
+        ctx.translate(x, y); ctx.scale(0.55 + 0.4 * entree + 0.08 * eclat, 0.55 + 0.4 * entree + 0.08 * eclat);
+        ctx.globalAlpha = 1;
+        partitionDessin(ctx, w, h, C[(i * 5) % 12], i, eclat * entree, false);
+        ctx.restore();
+      }
+    }
+    ctx.restore();
+    ctx.globalCompositeOperation = "source-over"; // le pavage s'efface vers le bas, sous le texte
+    const voile = ctx.createLinearGradient(0, H * 0.5, 0, H * 0.78);
+    voile.addColorStop(0, "rgba(15,14,20,0)"); voile.addColorStop(1, "rgba(15,14,20,1)");
+    ctx.globalAlpha = 1; ctx.fillStyle = voile; ctx.fillRect(0, H * 0.5, L, H * 0.5);
+    ctx.globalCompositeOperation = "lighter";
+  }
+
+  /* 3. Une partition, un nom de note : le nom est attiré, s'accroche à la partition, et les deux ne se quittent plus. */
   function scene3(ctx, L, H, t) {
-    const cycle = 2.4, elu = Math.floor(t / cycle) % NOMS.length, u = (t % cycle) / cycle, cx = L / 2, cy = H * 0.38;
-    const vers = doux(u * 3) * (1 - doux((u - 0.82) * 6)), coulElu = C[NOMS[elu][1]];
-    nappe(ctx, cx, cy, L * 0.8, coulElu, 0.3 * vers);
-    for (let j = 0; j < 6; j++) anneau(ctx, cx, cy, (70 + j * 30 + u * 60) * vers, coulElu, vers * (0.7 - j * 0.1), 1.3, t, j);
-    ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    NOMS.forEach(([nom, pc], i) => {
-      const bx = L * (0.08 + 0.84 * alea(i, 5)) + Math.sin(t * 0.5 + i * 1.7) * 16, by = H * (0.06 + 0.62 * alea(i, 6)) + Math.cos(t * 0.4 + i * 2.3) * 14;
-      const k = i === elu ? vers : 0, taille = (16 + alea(i, 7) * 26) * (1 - k) + 104 * k;
-      ctx.font = `600 ${taille}px Fraunces, Georgia, serif`;
-      ctx.fillStyle = k > 0.5 ? "#fff" : C[pc];
-      ctx.shadowColor = C[pc]; ctx.shadowBlur = 8 + 30 * k;
-      ctx.globalAlpha = (0.3 + 0.5 * alea(i, 8)) * (1 - k) + k;
-      ctx.fillText(nom, bx + (cx - bx) * k, by + (cy - by) * k);
-    });
-    ctx.shadowBlur = 0;
+    const cx = L / 2, cy = H * 0.38, w = L * 0.56, h = w * 1.28, coul = C[0];
+    const arrive = doux(t / 0.8), attire = Math.min(1, Math.max(0, (t - 1.3) / 0.55));
+    const colle = attire < 1 ? attire * attire * attire : 1; // l'aimant accélère jusqu'au contact
+    const apres = Math.max(0, t - 1.85), choc = Math.exp(-apres * 4) * (apres > 0 ? 1 : 0);
+    const bascule = apres > 0 ? Math.sin(apres * 0.9) * 0.16 : 0, largeur = apres > 0 ? 0.86 + 0.14 * Math.cos(apres * 1.1) : 1;
+    if (apres > 0) {
+      nappe(ctx, cx, cy, L * 0.8, coul, 0.2 + 0.25 * choc);
+      for (let j = 0; j < 7; j++) { const k = ((j / 7 + apres * 0.14) % 1 + 1) % 1; anneau(ctx, cx, cy, w * 0.5 + k * L * 0.7, coul, Math.pow(1 - k, 1.5) * 0.7 * Math.min(1, k * 10), 1.2, t, j); }
+    }
+    ctx.save();
+    ctx.translate(cx, cy + (1 - arrive) * H * 0.5); ctx.rotate(bascule - 0.05 * (1 - colle)); ctx.scale(largeur * (1 + 0.07 * choc), 1 + 0.07 * choc);
+    ctx.globalAlpha = 1;
+    partitionDessin(ctx, w, h, coul, 3, 0.25 * colle + 0.5 * choc, colle >= 1);
+    // le nom de la note : il flotte à distance, puis l'aimant le plaque sur la première note de la partition
+    const bx = -w * 0.26, by = -h * 0.2 - h * 0.13, loin = 1 - colle;
+    const fx = bx + loin * (w * 0.95 + Math.sin(t * 2.3) * 10) * (0.35 + 0.65 * (1 - arrive) + 0.65 * arrive), fy = by - loin * (h * 0.42 + Math.cos(t * 1.9) * 12);
+    const taille = w * (0.3 - 0.1 * colle) * (1 + 0.35 * choc);
+    if (loin > 0.02 && arrive > 0.5) { // le lien d'attraction
+      ctx.setLineDash([3, 6]); ctx.strokeStyle = "#fff"; ctx.globalAlpha = 0.35 + 0.5 * attire; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(bx, by); ctx.stroke(); ctx.setLineDash([]);
+    }
+    ctx.globalAlpha = arrive;
+    ctx.fillStyle = coul; ctx.shadowColor = coul; ctx.shadowBlur = 26;
+    ctx.beginPath(); ctx.arc(fx, fy, taille * 0.78, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0; ctx.globalCompositeOperation = "source-over";
+    ctx.fillStyle = "#14121a"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.font = `600 ${taille * 0.78}px Fraunces, Georgia, serif`;
+    ctx.fillText("do", fx, fy + taille * 0.04);
+    ctx.globalCompositeOperation = "lighter";
+    ctx.restore();
   }
 
   /* 4. L'oreille au centre, des ondes de toutes les couleurs, et le cycle « apprendre, recommencer ». */
