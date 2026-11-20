@@ -86,6 +86,7 @@
         <p class="rubrique">Réglages</p>
         <div class="ligne"><b>Nom des notes</b><span class="choix2" id="reg-notation"><button data-v="fr" class="${S.reglages.notation === "fr" ? "on" : ""}">do ré mi</button><button data-v="en" class="${S.reglages.notation === "en" ? "on" : ""}">C D E</button></span></div>
         <div class="ligne"><b>Vibrations</b><span class="choix2" id="reg-vibration"><button data-v="1" class="${S.reglages.vibration ? "on" : ""}">oui</button><button data-v="" class="${S.reglages.vibration ? "" : "on"}">non</button></span></div>
+        <button class="ligne" id="revoir"><b>Revoir l'introduction</b></button>
         <button class="ligne" id="installer" hidden><b>Installer l'application</b><em>gratuit</em></button>
         <button class="ligne" data-bientot="L'offre complète arrive avec le catalogue étendu"><b>Version complète</b><em>bientôt</em></button>
         <button class="ligne danger" id="remise"><b>Recommencer à zéro</b></button>
@@ -102,6 +103,7 @@
     document.querySelectorAll("#reg-notation button").forEach((b) => b.addEventListener("click", () => { S.reglages.notation = b.dataset.v; AH.sauver(); appliquerNotation(); rendreProfil(); AH.rendreAccueil(); }));
     document.querySelectorAll("#reg-vibration button").forEach((b) => b.addEventListener("click", () => { S.reglages.vibration = !!b.dataset.v; AH.sauver(); rendreProfil(); }));
     $("partager").addEventListener("click", partager);
+    $("revoir").addEventListener("click", accueillir);
     $("remise").addEventListener("click", () => {
       const b = $("remise");
       if (!b.dataset.sur) { b.dataset.sur = "1"; b.querySelector("b").textContent = "Toucher encore pour tout effacer"; return; }
@@ -154,29 +156,190 @@
     AH.toast("Image enregistrée");
   }
 
-  /* ---------- premier lancement : trois écrans, presque sans texte ---------- */
+  /* ---------- introduction : quatre écrans animés qui montrent la mécanique ---------- */
+  const INTRO = [
+    "Écouter la note",
+    "Retrouver le morceau",
+    "Puis retrouver le nom de la note",
+    "Apprenez, recommencez, et obtenez l'oreille absolue !",
+  ];
+  const C = AH.COULEURS;
+  const alea = (i, k) => { const v = Math.sin(i * 127.1 + k * 311.7) * 43758.5453; return v - Math.floor(v); };
+  const doux = (x) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
+
+  function anneau(ctx, x, y, r, couleur, alpha, epais, t, graine) {
+    if (r <= 1 || alpha <= 0.01) return;
+    ctx.beginPath();
+    for (let n = 0; n <= 72; n++) {
+      const th = (n / 72) * Math.PI * 2;
+      const rr = r * (1 + 0.035 * Math.sin(4 * th + graine + t * 0.9) + 0.02 * Math.sin(9 * th - t * 1.3 + graine * 2));
+      const px = x + Math.cos(th) * rr, py = y + Math.sin(th) * rr;
+      if (n) ctx.lineTo(px, py); else ctx.moveTo(px, py);
+    }
+    ctx.strokeStyle = couleur;
+    ctx.globalAlpha = alpha;
+    ctx.lineWidth = epais;
+    ctx.stroke();
+  }
+  function nappe(ctx, x, y, r, couleur, alpha) {
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, couleur);
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = g;
+    ctx.fillRect(x - r, y - r, 2 * r, 2 * r);
+  }
+  function noteDessin(ctx, x, y, e, couleur) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = couleur;
+    ctx.strokeStyle = couleur;
+    ctx.shadowColor = couleur;
+    ctx.shadowBlur = 24 * e;
+    ctx.save(); ctx.rotate(-0.35); ctx.beginPath(); ctx.ellipse(0, 0, 17 * e, 12 * e, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    ctx.lineWidth = 4 * e; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(14.5 * e, -4 * e); ctx.lineTo(14.5 * e, -66 * e); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(14.5 * e, -66 * e); ctx.bezierCurveTo(22 * e, -50 * e, 40 * e, -46 * e, 32 * e, -22 * e); ctx.lineWidth = 3.4 * e; ctx.stroke();
+    ctx.restore();
+  }
+
+  /* 1. Une note tombe, touche le centre, et son onde se répand. */
+  function scene1(ctx, L, H, t) {
+    const cycle = 2.8, u = (t % cycle) / cycle, coul = C[(Math.floor(t / cycle) * 5 + 10) % 12];
+    const cx = L / 2, cy = H * 0.4;
+    const y = u < 0.28 ? -60 + (cy + 60) * Math.pow(u / 0.28, 2) : cy - 14 * Math.exp(-(u - 0.28) * 9) * Math.abs(Math.sin((u - 0.28) * 22));
+    if (u >= 0.28) {
+      const k = (u - 0.28) / 0.72;
+      nappe(ctx, cx, cy, 60 + k * L * 0.9, coul, 0.42 * Math.pow(1 - k, 1.4));
+      for (let j = 0; j < 9; j++) anneau(ctx, cx, cy + 6, k * L * 0.95 - j * 24, coul, Math.pow(1 - k, 1.3) * (1 - j * 0.09), 1 + 1.6 * (1 - k), t, j);
+    }
+    noteDessin(ctx, cx - 6, y, 1.35, "#fffaf0");
+  }
+
+  /* 2. Des partitions de toutes les couleurs arrivent de partout et s'assemblent en pavage ; l'une d'elles s'illumine. */
+  function scene2(ctx, L, H, t) {
+    const cols = 4, rangs = 5, w = L / (cols + 0.5), h = w * 1.28, x0 = (L - cols * w) / 2 + w / 2, y0 = H * 0.06 + h / 2;
+    const cycle = 6, u = t % cycle, sortie = doux((u - 5.1) / 0.8), elue = 9;
+    for (let i = 0; i < cols * rangs; i++) {
+      const p = doux((u - 0.15 - i * 0.07) / 1.1) * (1 - sortie);
+      const tx = x0 + (i % cols) * w, ty = y0 + Math.floor(i / cols) * h * 0.86;
+      const sx = L / 2 + (alea(i, 1) - 0.5) * L * 2.4, sy = H * 0.4 + (alea(i, 2) - 0.5) * H * 1.8;
+      const x = sx + (tx - sx) * p, y = sy + (ty - sy) * p, rot = (alea(i, 3) - 0.5) * 3 * (1 - p), coul = C[(i * 5) % 12];
+      const choisie = i === elue ? doux((u - 2.6) / 0.6) * (1 - sortie) : 0, ech = 0.9 + 0.22 * choisie;
+      ctx.save();
+      ctx.translate(x, y); ctx.rotate(rot); ctx.scale(ech, ech);
+      ctx.globalAlpha = (0.14 + 0.5 * choisie) * (0.25 + 0.75 * p);
+      ctx.fillStyle = coul;
+      ctx.beginPath(); ctx.roundRect(-w * 0.44, -h * 0.4, w * 0.88, h * 0.8, 8); ctx.fill();
+      ctx.globalAlpha = (0.75 + 0.25 * choisie) * (0.2 + 0.8 * p);
+      ctx.strokeStyle = coul; ctx.lineWidth = 1.2 + choisie * 1.5;
+      if (choisie) { ctx.shadowColor = coul; ctx.shadowBlur = 26 * choisie; }
+      ctx.stroke();
+      ctx.shadowBlur = 0; ctx.lineWidth = 0.8;
+      for (let p2 = 0; p2 < 2; p2++) { // deux portées de cinq lignes, quelques notes
+        const py = -h * 0.2 + p2 * h * 0.36;
+        for (let l = 0; l < 5; l++) { ctx.beginPath(); ctx.moveTo(-w * 0.34, py + l * 3.4); ctx.lineTo(w * 0.34, py + l * 3.4); ctx.stroke(); }
+        ctx.fillStyle = choisie ? "#fff" : coul;
+        for (let n = 0; n < 5; n++) { ctx.beginPath(); ctx.ellipse(-w * 0.26 + n * w * 0.13, py + alea(i * 7 + n, p2 + 4) * 15 - 1, 2.6, 2, -0.3, 0, Math.PI * 2); ctx.fill(); }
+      }
+      ctx.restore();
+    }
+  }
+
+  /* 3. Les noms des notes flottent ; l'un après l'autre, ils viennent au centre. */
+  const NOMS = [["do", 0], ["ré", 2], ["mi", 4], ["fa", 5], ["sol", 7], ["la", 9], ["si", 11], ["do♯", 1], ["mi♭", 3], ["fa♯", 6], ["la♭", 8], ["si♭", 10], ["C", 0], ["D", 2], ["E", 4], ["F", 5], ["G", 7], ["A", 9], ["B", 11], ["F♯", 6], ["B♭", 10], ["sol", 7], ["ré", 2], ["la", 9]];
+  function scene3(ctx, L, H, t) {
+    const cycle = 2.4, elu = Math.floor(t / cycle) % NOMS.length, u = (t % cycle) / cycle, cx = L / 2, cy = H * 0.38;
+    const vers = doux(u * 3) * (1 - doux((u - 0.82) * 6)), coulElu = C[NOMS[elu][1]];
+    nappe(ctx, cx, cy, L * 0.8, coulElu, 0.3 * vers);
+    for (let j = 0; j < 6; j++) anneau(ctx, cx, cy, (70 + j * 30 + u * 60) * vers, coulElu, vers * (0.7 - j * 0.1), 1.3, t, j);
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    NOMS.forEach(([nom, pc], i) => {
+      const bx = L * (0.08 + 0.84 * alea(i, 5)) + Math.sin(t * 0.5 + i * 1.7) * 16, by = H * (0.06 + 0.62 * alea(i, 6)) + Math.cos(t * 0.4 + i * 2.3) * 14;
+      const k = i === elu ? vers : 0, taille = (16 + alea(i, 7) * 26) * (1 - k) + 104 * k;
+      ctx.font = `600 ${taille}px Fraunces, Georgia, serif`;
+      ctx.fillStyle = k > 0.5 ? "#fff" : C[pc];
+      ctx.shadowColor = C[pc]; ctx.shadowBlur = 8 + 30 * k;
+      ctx.globalAlpha = (0.3 + 0.5 * alea(i, 8)) * (1 - k) + k;
+      ctx.fillText(nom, bx + (cx - bx) * k, by + (cy - by) * k);
+    });
+    ctx.shadowBlur = 0;
+  }
+
+  /* 4. L'oreille au centre, des ondes de toutes les couleurs, et le cycle « apprendre, recommencer ». */
+  function oreille(ctx, x, y, e) {
+    ctx.save();
+    ctx.translate(x, y); ctx.scale(e, e);
+    const g = ctx.createLinearGradient(-50, -80, 60, 80);
+    [C[0], C[2], C[4], C[7], C[9], C[11]].forEach((c, i) => g.addColorStop(i / 5, c));
+    ctx.strokeStyle = g; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.globalAlpha = 1;
+    ctx.shadowColor = "#fff"; ctx.shadowBlur = 14;
+    ctx.lineWidth = 10; // pavillon
+    ctx.beginPath(); ctx.moveTo(-30, -18); ctx.bezierCurveTo(-36, -74, 46, -84, 46, -22); ctx.bezierCurveTo(46, 12, 18, 22, 16, 48); ctx.bezierCurveTo(14, 72, -16, 76, -26, 54); ctx.stroke();
+    ctx.lineWidth = 8; // repli intérieur
+    ctx.beginPath(); ctx.moveTo(-10, -22); ctx.bezierCurveTo(-12, -52, 26, -54, 24, -22); ctx.bezierCurveTo(23, -6, 6, 2, 2, 16); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-6, 2); ctx.bezierCurveTo(-18, 6, -14, 26, -2, 22); ctx.stroke();
+    ctx.restore();
+  }
+  function scene4(ctx, L, H, t) {
+    const cx = L / 2, cy = H * 0.38, R = L * 0.95;
+    nappe(ctx, cx, cy, L * 0.9, C[Math.floor(t * 0.5) % 12], 0.16);
+    for (let i = 0; i < 26; i++) { // ondes multicolores, de plus en plus larges
+      const k = ((i / 26 + t * 0.05) % 1 + 1) % 1;
+      anneau(ctx, cx, cy, 96 + k * (R - 96), C[(i * 5) % 12], Math.pow(1 - k, 1.5) * 0.85 * Math.min(1, k * 14), 0.7 + 1.2 * (1 - k), t, i);
+    }
+    ctx.globalCompositeOperation = "source-over";
+    ctx.globalAlpha = 1; ctx.fillStyle = "#14121a";
+    ctx.beginPath(); ctx.arc(cx, cy, 92, 0, Math.PI * 2); ctx.fill();
+    oreille(ctx, cx - 4, cy, 0.92);
+    for (let k = 0; k < 2; k++) { // deux flèches qui tournent : on apprend, on recommence
+      const a0 = t * 0.9 + k * Math.PI, a1 = a0 + 2.1, r = 124;
+      ctx.strokeStyle = "#fff3d6"; ctx.fillStyle = "#fff3d6"; ctx.globalAlpha = 0.9; ctx.lineWidth = 4; ctx.lineCap = "round"; ctx.shadowColor = "#e9c27a"; ctx.shadowBlur = 12;
+      ctx.beginPath(); ctx.arc(cx, cy, r, a0, a1); ctx.stroke();
+      const px = cx + Math.cos(a1) * r, py = cy + Math.sin(a1) * r;
+      ctx.save(); ctx.translate(px, py); ctx.rotate(a1 + Math.PI / 2);
+      ctx.beginPath(); ctx.moveTo(12, 0); ctx.lineTo(-8, -10); ctx.lineTo(-8, 10); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+    ctx.shadowBlur = 0;
+  }
+  const SCENES = [scene1, scene2, scene3, scene4];
+
   function accueillir() {
-    const pages = [
-      { visuel: '<span class="orbe demo"><svg viewBox="0 0 24 24" width="40" height="40" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>', titre: "Une note" },
-      { visuel: '<span class="cartes-demo"><i>Nocturne</i><i class="bon">Gymnopédie</i></span>', titre: "Un morceau" },
-      { visuel: '<span class="clavier-demo">' + AH.COULEURS.map((c, i) => `<i style="--c:${c};animation-delay:${i * 0.12}s"></i>`).join("") + "</span>", titre: "Ton clavier s'allume" },
-    ];
-    let i = 0;
+    let i = 0, t0 = performance.now(), id = 0;
     const el = document.createElement("div");
     el.className = "bienvenue";
+    el.innerHTML = '<canvas></canvas><h2></h2><div class="points"></div><button class="bouton plein grand"></button>';
+    const toile = el.querySelector("canvas"), ctx = toile.getContext("2d");
     const rendre = () => {
-      el.innerHTML = `<div class="visuel">${pages[i].visuel}</div><h2>${pages[i].titre}</h2>
-        <div class="points">${pages.map((_, j) => `<i class="${j === i ? "ok" : ""}"></i>`).join("")}</div>
-        <button class="bouton plein grand">${i === pages.length - 1 ? "Jouer" : "Suivant"}</button>`;
-      el.querySelector("button").addEventListener("click", () => {
-        if (++i < pages.length) return rendre();
-        S.profil.accueilVu = true;
-        AH.sauver();
-        el.remove();
-      });
+      t0 = performance.now();
+      const h = el.querySelector("h2");
+      h.textContent = INTRO[i];
+      h.style.animation = "none"; void h.offsetWidth; h.style.animation = "";
+      el.querySelector(".points").innerHTML = INTRO.map((_, j) => `<i class="${j === i ? "ok" : ""}"></i>`).join("");
+      el.querySelector("button").textContent = i === INTRO.length - 1 ? "Jouer" : "Suivant";
     };
-    rendre();
+    function image(maintenant) {
+      const ratio = Math.min(2, window.devicePixelRatio || 1), L = toile.clientWidth, H = toile.clientHeight;
+      if (toile.width !== Math.round(L * ratio)) { toile.width = Math.round(L * ratio); toile.height = Math.round(H * ratio); }
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+      ctx.clearRect(0, 0, L, H);
+      ctx.globalCompositeOperation = "lighter";
+      SCENES[i](ctx, L, H, (maintenant - t0) / 1000);
+      id = requestAnimationFrame(image);
+    }
+    el.querySelector("button").addEventListener("click", () => {
+      if (++i < INTRO.length) return rendre();
+      cancelAnimationFrame(id);
+      S.profil.accueilVu = true;
+      AH.sauver();
+      el.remove();
+    });
     $("app").appendChild(el);
+    rendre();
+    id = requestAnimationFrame(image);
   }
   if (!S.profil.accueilVu) accueillir();
 
