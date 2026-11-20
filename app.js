@@ -16,6 +16,7 @@
   const PALIERS = ["2 choix", "4 choix", "compositeur, morceau", "compositeur, type, numéro", "la note seule"]; // échelle du morceau
   const NIVEAUX_NOTE = 3; // échelle de la note : 2 notes, 4 notes, puis le clavier
   const DERNIER = PALIERS.length - 1;
+  const POINTS_NOTE_SEULE = 1000; // valeur d'une bonne réponse au dernier palier
   const DEMI_VIE = 6; // les points en jeu sont divisés par deux toutes les 6 secondes
   const COEF_NOTES = [1, 0.75, 0.5, 0.35]; // selon le nombre de notes entendues (1 à 4)
   const COEF_ECOUTE = 0.2; // après « le début »
@@ -691,7 +692,8 @@
   }
   /* Points en jeu : 100 par palier atteint, divisés par deux toutes les 6 secondes, réduits par les aides. */
   function valeur() {
-    const base = q.phase === "titre" || q.T === DERNIER ? 100 * (q.T + 1) : 100 * (q.N + 1);
+    // Le dernier palier (la note seule) doit rapporter plus que n'importe quel autre : 1000, contre 700 au mieux avant lui.
+    const base = q.T === DERNIER ? POINTS_NOTE_SEULE : q.phase === "titre" ? 100 * (q.T + 1) : 100 * (q.N + 1);
     const aides = q.phase === "titre" || q.T === DERNIER ? (q.ecoute ? COEF_ECOUTE : COEF_NOTES[q.nb - 1]) : 1;
     return Math.max(1, Math.round(base * aides * Math.pow(0.5, (performance.now() - q.t0) / 1000 / DEMI_VIE)));
   }
