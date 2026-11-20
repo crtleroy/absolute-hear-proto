@@ -477,13 +477,18 @@
     change.forEach((m) => { if (avant[m]) depart[m] = avant[m]; else delete depart[m]; });
     const touches = grandClavier($("acc-clavier"), Object.assign({}, niv, depart, Object.fromEntries(change.filter((m) => !avant[m]).map((m) => [m, 0]))), null);
     jauge(depart);
-    change.forEach((m, i) => chrono.push(setTimeout(() => {
+    const allumer = (i) => {
       if ($("accueil").hidden) return;
+      // tant qu'une publicité ou une feuille est à l'écran, on attend : le clavier ne s'allume que quand on le voit
+      if (document.querySelector(".pub, .volet")) { chrono.push(setTimeout(() => allumer(i), 350)); return; }
+      const m = change[i];
       depart[m] = niv[m];
       habiller(touches[m], niv[m], true);
       sonNeon(m);
       jauge(depart);
-    }, 700 + i * 520)));
+      if (i + 1 < change.length) chrono.push(setTimeout(() => allumer(i + 1), 520));
+    };
+    chrono.push(setTimeout(() => allumer(0), 700));
   }
   function rendreAccueil() {
     vue("accueil");
@@ -950,7 +955,8 @@
     majLecture();
   }
   $("mini-lecture").addEventListener("click", () => ecouter(lecteur.piece, lecteur.file));
-  $("mini-suivant").addEventListener("click", morceauSuivant);
+  // retour au début : on réécoute la première note, puis le morceau
+  $("mini-debut").addEventListener("click", () => { const p = lecteur.piece, file = lecteur.file; if (!p) return; arreter(); ecouter(p, file); });
   $("mini-ouvrir").addEventListener("click", () => ouvrirFiche(lecteur.piece));
 
   // ce que les autres modules de l'appli peuvent utiliser (profil, partage, réglages : voir plus.js)

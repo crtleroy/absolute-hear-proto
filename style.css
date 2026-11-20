@@ -594,3 +594,14 @@ p { margin: 0; }
 .cl-vide { display: grid; justify-items: center; gap: 8px; padding: 40px 20px; text-align: center; }
 .cl-vide b { font-family: var(--titre); font-size: 1.4rem; }
 .cl-vide small { color: var(--discret); }
+
+/* ================= néon : la touche reste une touche éteinte, seule sa lumière clignote ================= */
+.grand-clavier .tb.neuf { background: #2b2931 !important; box-shadow: inset -1px 0 0 #0f0e14 !important; animation: none !important; filter: none; }
+.grand-clavier .tn.neuf { background: #050408 !important; box-shadow: none !important; animation: none !important; filter: none; }
+.grand-clavier .neuf::after { content: ""; position: absolute; inset: 0; border-radius: inherit; opacity: 0; pointer-events: none;
+  animation: neon-lueur var(--d, 3s) steps(1, end) var(--r, 0s) infinite; }
+.grand-clavier .tb.neuf::after { background: radial-gradient(ellipse 130% 60% at 50% 74%, color-mix(in srgb, var(--c) 72%, #fff) 0%, var(--c) 55%, color-mix(in srgb, var(--c) 60%, #2b2931) 100%); box-shadow: 0 0 14px color-mix(in srgb, var(--c) 55%, transparent); }
+.grand-clavier .tn.neuf::after { background: radial-gradient(ellipse 95% 70% at 50% 66%, color-mix(in srgb, var(--c) 78%, #fff) 0%, var(--c) 48%, color-mix(in srgb, var(--c) 45%, #050408) 100%); box-shadow: 0 0 9px color-mix(in srgb, var(--c) 60%, transparent); }
+@keyframes neon-lueur { 0%, 100% { opacity: 0; } 22% { opacity: 0; } 23% { opacity: .95; } 25% { opacity: .05; } 27% { opacity: .85; } 31% { opacity: 0; }
+  63% { opacity: 0; } 64% { opacity: 1; } 66% { opacity: .1; } 67% { opacity: .9; } 72% { opacity: .8; } 73% { opacity: 0; } 88% { opacity: 0; } 89% { opacity: .6; } 90% { opacity: 0; } }
+.grand-clavier .neuf.eveil { animation: eclat 1.3s ease-out backwards !important; }
