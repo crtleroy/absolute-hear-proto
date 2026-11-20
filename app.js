@@ -12,7 +12,7 @@
 
   /* ---------- règles du jeu ---------- */
   const DEPART = 2; // morceaux dans la liste au tout début
-  const VIES = 3;
+  const VIES = 1; // un seul cœur : une erreur sur le morceau le coûte en entier, une erreur sur la note en coûte la moitié
   const PALIERS = ["2 choix", "4 choix", "compositeur, morceau", "compositeur, type, numéro", "la note seule"]; // échelle du morceau
   const NIVEAUX_NOTE = 3; // échelle de la note : 2 notes, 4 notes, puis le clavier
   const DERNIER = PALIERS.length - 1;
@@ -659,8 +659,9 @@
     rendreAccueil();
   });
 
+  const coeurs = (v) => Array.from({ length: VIES }, (_, i) => `<span class="${v >= i + 1 ? "" : v > i ? "demi" : "perdue"}">♥</span>`).join("");
   function majStatut() {
-    $("vies").innerHTML = Array.from({ length: VIES }, (_, i) => `<span class="${i < run.vies ? "" : "perdue"}">♥</span>`).join("");
+    $("vies").innerHTML = coeurs(run.vies);
     $("avance").textContent = `${Math.min(run.i + 1, run.file.length)} / ${run.file.length}`;
     $("score").textContent = run.score;
   }
@@ -828,14 +829,15 @@
     if (!juste) delete S.acquis[p.id];
     S.points += gain;
     run.score += gain;
-    if (!juste) run.vies--;
+    if (!juste) run.vies -= seule ? 0.5 : 1; // au dernier palier, l'erreur porte sur la note
+    else if (!seule && !q.noteJuste) run.vies -= 0.5;
     sauver();
     majStatut();
     $("enjeu").innerHTML = juste ? `<b>+${gain}</b>` : "";
     document.dispatchEvent(new CustomEvent("ah:reponse", { detail: { juste, palier: avant, temps: (performance.now() - q.debut) / 1000 } }));
-    const parts = !juste ? [{ txt: "−1 vie" }]
+    const parts = !juste ? [{ txt: seule ? "−½ vie" : "−1 vie" }]
       : seule ? [{ txt: `note +${q.gain}` }]
-      : [{ txt: `morceau +${q.gain}` }, q.noteJuste ? { txt: `note +${q.bonus}` } : { txt: "note", non: true }];
+      : [{ txt: `morceau +${q.gain}` }, q.noteJuste ? { txt: `note +${q.bonus}` } : { txt: "note : −½ vie" }];
     const resultat = { juste, gain, parts, avant, apres, acquis: juste && seule };
     setTimeout(() => { apercu(p).catch(() => {}); ouvrirFiche(p, resultat, suivante); }, delai);
   }
@@ -871,7 +873,7 @@
     fin.style.removeProperty("--c");
     $("fin-sur").textContent = victoire ? "Bravo" : "Partie terminée";
     $("fin-titre").textContent = victoire ? "Partie réussie" : "Plus de vies";
-    $("fin-vies").innerHTML = Array.from({ length: VIES }, (_, i) => `<span class="${i < run.vies ? "" : "perdue"}">♥</span>`).join("");
+    $("fin-vies").innerHTML = coeurs(run.vies);
     $("fin-vies").hidden = false;
     $("fin-carte").hidden = true;
     document.querySelector(".score-fin").hidden = false;
