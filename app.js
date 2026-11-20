@@ -59,7 +59,7 @@
   racine.setProperty("--v3", vague("#fff0c8", 240, 76, 6));
 
   /* ---------- état persistant ---------- */
-  let S = { liste: [], palier: {}, niveauNote: {}, acquis: {}, points: 0, record: 0 };
+  let S = { liste: [], palier: {}, niveauNote: {}, acquis: {}, essaye: {}, points: 0, record: 0 };
   try { S = Object.assign(S, JSON.parse(localStorage.getItem("absolute-hear-3") || "{}")); } catch (e) { /* stockage indisponible */ }
   S.liste = S.liste.filter((id) => PAR_ID[id]);
   if (S.liste.length < DEPART) S.liste = PIECES.slice(0, DEPART).map((p) => p.id);
@@ -326,7 +326,7 @@
     $("f-note").textContent = p.midis.map(sci).join(" + ");
     $("f-titre").textContent = p.titre;
     $("f-comp").textContent = p.compositeur;
-    grandClavier($("f-clavier"), niveauxTouches(), null, p.midis);
+    grandClavier($("f-clavier"), niveauxTouches(), p.midis);
     const e = ENR[p.titre];
     $("f-credit").textContent = resultat ? "" : e ? `Enregistrement : ${e.interprete || "interprète non précisé"} · ${e.licence}` : "Écoute en rendu synthétique";
     $("f-suite").textContent = suite ? "Continuer" : "Fermer";
@@ -376,45 +376,97 @@
   function niveauxTouches() {
     const niv = {};
     maListe().forEach((p) => {
-      const n = S.acquis[p.id] ? 5 : Math.min(4, palier(p) + 1);
+      const essaye = S.essaye[p.id] || S.palier[p.id] > 0 || S.acquis[p.id];
+      const n = S.acquis[p.id] ? 5 : !essaye ? 0.5 : Math.min(4, palier(p) + 1);
       p.midis.forEach((m) => { niv[m] = Math.max(niv[m] || 0, n); });
     });
     return niv;
   }
   let niveauxVus = null; // ce que le clavier montrait la dernière fois, pour animer les touches qui ont progressé
-  /* Le grand clavier de l'appli (accueil, écran de validation) : 88 touches aux proportions réelles.
-     niv : niveau de chaque touche ; avant : niveaux déjà montrés (les touches qui ont progressé s'éveillent) ; ici : touches à mettre en avant. */
-  function grandClavier(zone, niv, avant, ici) {
-    zone.innerHTML = "";
-    const lb = 100 / 52;
-    let blanches = 0;
-    for (let m = 21; m <= 108; m++) {
-      const t = document.createElement("span"), n = niv[m] || 0;
-      if (NOIRES.includes(m % 12)) {
-        // largeur et décalage d'une vraie touche noire (13,7 mm contre 23,5 mm ; do♯ et fa♯ tirent à gauche, mi♭ et si♭ à droite)
-        const decal = { 1: -0.12, 3: 0.12, 6: -0.16, 8: 0, 10: 0.16 }[m % 12];
-        t.className = "t tn";
-        t.style.width = `${lb * 0.583}%`;
-        t.style.left = `${(blanches + decal) * lb - (lb * 0.583) / 2}%`;
-      } else { t.className = "t tb"; blanches++; }
-      if (n) {
-        t.classList.add("n" + n);
-        t.style.setProperty("--c", COULEURS[m % 12]);
-        if (avant && n > (avant[m] || 0)) t.classList.add("eveil");
-      }
-      if (ici && ici.includes(m)) { t.classList.add("ici"); t.style.setProperty("--c", COULEURS[m % 12]); }
-      zone.appendChild(t);
-    }
+  /* Le grand clavier de l'appli (accueil, écran de validation), aux proportions d'un vrai piano.
+     Il ne montre que la partie du clavier qui sert : de la note la plus grave à la plus aiguë, avec une marge.
+     Chaque touche allumée projette un halo de sa couleur, qui déborde au-dessus et en dessous du clavier. */
+  function plage(notes) {
+    let bas = Math.max(21, (notes.length ? Math.min(...notes) : 60) - 4), haut = Math.min(108, (notes.length ? Math.max(...notes) : 60) + 4);
+    while (haut - bas < 26) { if (bas > 21) bas--; if (haut < 108 && haut - bas < 26) haut++; }
+    while (NOIRES.includes(bas % 12)) bas--;
+    while (NOIRES.includes(haut % 12)) haut++;
+    return [bas, haut];
   }
+  function habiller(k, n, eveil) { // met une touche (et son halo) à son niveau
+    k.t.className = k.base + (n ? " n" + Math.max(1, Math.round(n)) : "") + (n === 0.5 ? " neuf" : "") + (k.ici ? " ici" : "") + (eveil ? " eveil" : "");
+    k.f.className = "faisceau" + (n === 0.5 ? " neuf" : "") + (eveil ? " eveil" : "");
+    k.f.style.opacity = n ? (k.ici ? 0.75 : 0.16 + 0.1 * n) : 0;
+  }
+  function grandClavier(zone, niv, ici) {
+    const [bas, haut] = plage([...Object.keys(niv).map(Number), ...(ici || [])]);
+    zone.innerHTML = "";
+    let nb = 0;
+    for (let m = bas; m <= haut; m++) if (!NOIRES.includes(m % 12)) nb++;
+    zone.style.aspectRatio = `${nb * 23.5} / 150`;
+    const lueurs = document.createElement("div");
+    lueurs.className = "lueurs";
+    zone.appendChild(lueurs);
+    const lb = 100 / nb, touches = {};
+    let blanches = 0;
+    for (let m = bas; m <= haut; m++) {
+      const t = document.createElement("span"), f = document.createElement("span"), noire = NOIRES.includes(m % 12);
+      let centre;
+      if (noire) {
+        // largeur et décalage d'une vraie touche noire (13,7 mm contre 23,5 mm ; do♯ et fa♯ tirent à gauche, mi♭ et si♭ à droite)
+        centre = (blanches + { 1: -0.12, 3: 0.12, 6: -0.16, 8: 0, 10: 0.16 }[m % 12]) * lb;
+        t.style.width = `${lb * 0.583}%`;
+        t.style.left = `${centre - (lb * 0.583) / 2}%`;
+      } else { centre = (blanches + 0.5) * lb; blanches++; }
+      const rythme = `--d:${(2.6 + ((m * 37) % 20) / 10).toFixed(1)}s;--r:${(-((m * 53) % 30) / 10).toFixed(1)}s;--c:${COULEURS[m % 12]}`;
+      t.style.cssText += ";" + rythme;
+      f.style.cssText = `left:${centre}%;width:${lb * 7}%;${rythme}`;
+      lueurs.appendChild(f);
+      zone.appendChild(t);
+      touches[m] = { t, f, base: noire ? "t tn" : "t tb", ici: !!(ici && ici.includes(m)) };
+      habiller(touches[m], niv[m] || 0, false);
+    }
+    return touches;
+  }
+
+  /* Petit bruit de néon qui s'allume : deux grésillements secs, puis la note de la touche, très doucement. */
+  let gresil = null;
+  function sonNeon(midi) {
+    if (!piano) return;
+    try {
+      reveiller();
+      if (!gresil) {
+        const filtre = new Tone.Filter(3400, "bandpass").toDestination();
+        gresil = new Tone.NoiseSynth({ noise: { type: "white" }, envelope: { attack: 0.001, decay: 0.06, sustain: 0 }, volume: -20 }).connect(filtre);
+      }
+      const t = Tone.now();
+      gresil.triggerAttackRelease(0.04, t);
+      gresil.triggerAttackRelease(0.07, t + 0.09);
+      piano.triggerAttackRelease(Tone.Frequency(midi, "midi").toFrequency(), 0.9, t + 0.12, 0.28);
+    } catch (e) { /* le son d'ambiance n'est jamais bloquant */ }
+  }
+
+  let chrono = [];
   function rendreClavierAccueil() {
-    const niv = niveauxTouches(), valeurs = Object.values(niv);
-    // le piano de verre en 3D quand c'est possible, sinon le clavier dessiné
-    const zone = $("acc-clavier");
-    if (window.Piano3D && window.Piano3D.maj(zone, niv, niveauxVus, COULEURS)) zone.classList.add("trois-d");
-    else { zone.classList.remove("trois-d"); grandClavier(zone, niv, niveauxVus, null); }
+    const niv = niveauxTouches(), avant = niveauxVus, valeurs = Object.values(niv);
+    chrono.forEach(clearTimeout);
+    chrono = [];
+    const jauge = (n) => { const v = Object.values(n); $("acc-jauge").textContent = Math.round((100 * v.reduce((a, x) => a + x, 0)) / (88 * 5)); $("acc-touches").innerHTML = `<b>${v.length}</b> / 88 touches`; };
+    const change = avant ? Object.keys(niv).map(Number).filter((m) => niv[m] !== (avant[m] || 0)).sort((a, b) => a - b) : [];
     niveauxVus = niv;
-    $("acc-jauge").textContent = Math.round((100 * valeurs.reduce((a, n) => a + n, 0)) / (88 * 5));
-    $("acc-touches").innerHTML = `<b>${valeurs.length}</b> / 88 touches`;
+    if (!change.length) { grandClavier($("acc-clavier"), niv, null); jauge(niv); return; }
+    // Retour d'une partie : le clavier apparaît tel qu'on l'avait laissé, puis les touches qui ont progressé s'allument une à une.
+    const depart = Object.assign({}, niv);
+    change.forEach((m) => { if (avant[m]) depart[m] = avant[m]; else delete depart[m]; });
+    const touches = grandClavier($("acc-clavier"), Object.assign({}, niv, depart, Object.fromEntries(change.filter((m) => !avant[m]).map((m) => [m, 0]))), null);
+    jauge(depart);
+    change.forEach((m, i) => chrono.push(setTimeout(() => {
+      if ($("accueil").hidden) return;
+      depart[m] = niv[m];
+      habiller(touches[m], niv[m], true);
+      sonNeon(m);
+      jauge(depart);
+    }, 700 + i * 520)));
   }
   function rendreAccueil() {
     vue("accueil");
@@ -770,6 +822,7 @@
     const gain = juste ? q.gain + q.bonus : 0;
     const apres = Math.max(0, Math.min(DERNIER, avant + (juste ? 1 : -1)));
     S.palier[p.id] = apres;
+    S.essaye[p.id] = true; // ce morceau a été joué au moins une fois : sa touche cesse de clignoter
     if (juste && !seule) S.niveauNote[p.id] = Math.max(0, Math.min(NIVEAUX_NOTE - 1, q.N + (q.noteJuste ? 1 : -1))); // la note a sa propre échelle
     if (juste && seule) S.acquis[p.id] = true; // réussi au dernier palier : la note est acquise
     if (!juste) delete S.acquis[p.id];

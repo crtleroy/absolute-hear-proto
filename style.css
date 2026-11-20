@@ -447,3 +447,26 @@ p { margin: 0; }
 .grand-clavier.trois-d { height: 250px; }
 .grand-clavier.trois-d canvas { mix-blend-mode: screen; } /* le noir du rendu laisse voir l'écran : seule la lumière s'ajoute */
 .grand-clavier.trois-d { height: 210px; }
+
+/* ================= clavier vivant : zoom sur la zone utile, halo qui déborde, néons ================= */
+.grand-clavier { margin: 26px -22px 0; }
+.grand-clavier .tb { border-radius: 0 0 4px 4px; }
+.grand-clavier .tn { border-radius: 0 0 3px 3px; }
+.grand-clavier .tb[class*=" n"] { animation: respire var(--d, 4s) ease-in-out var(--r, 0s) infinite alternate; }
+.grand-clavier .tb.n3, .grand-clavier .tb.n4, .grand-clavier .tb.n5 { box-shadow: inset -1px 0 0 #0f0e14, 0 0 18px color-mix(in srgb, var(--c) 55%, transparent); }
+.lueurs { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+/* le halo de chaque touche allumée : une colonne de lumière qui sort du clavier par le haut et par le bas */
+.faisceau { position: absolute; top: -190%; height: 480%; transform: translateX(-50%); opacity: 0; mix-blend-mode: screen; transition: opacity 1.2s;
+  background: radial-gradient(ellipse 50% 50% at 50% 50%, color-mix(in srgb, var(--c) 85%, transparent) 0%, color-mix(in srgb, var(--c) 30%, transparent) 30%, transparent 70%);
+  animation: respire var(--d, 4s) ease-in-out var(--r, 0s) infinite alternate; }
+/* jamais essayé : la touche clignote comme un néon fatigué */
+.grand-clavier .neuf, .faisceau.neuf { animation: neon var(--d, 3s) steps(1, end) var(--r, 0s) infinite !important; }
+@keyframes neon { 0%, 100% { filter: brightness(1.15); } 4% { filter: brightness(.25); } 7% { filter: brightness(1.2); } 10% { filter: brightness(.15); } 14% { filter: brightness(1.1); }
+  46% { filter: brightness(1.1); } 48% { filter: brightness(.3); } 51% { filter: brightness(1.2); } 78% { filter: brightness(1.15); } 80% { filter: brightness(.2); } 82% { filter: brightness(1); } 85% { filter: brightness(.4); } 88% { filter: brightness(1.15); } }
+/* une touche qui vient de progresser : elle claque, puis se pose à son nouveau niveau */
+.grand-clavier .eveil { animation: eclat 1.3s ease-out backwards, respire var(--d, 4s) ease-in-out 1.3s infinite alternate !important; }
+.faisceau.eveil { animation: surbrille 1.4s ease-out backwards, respire var(--d, 4s) ease-in-out 1.4s infinite alternate !important; }
+@keyframes surbrille { from { filter: brightness(3.2) saturate(.6); transform: translateX(-50%) scale(1.6, 1.25); } }
+.grand-clavier.fiche { margin: 0 -22px 20px; }
+.grand-clavier .ici { animation: ici 1.6s ease-in-out infinite alternate !important; }
+.jauge-touches { position: relative; }
