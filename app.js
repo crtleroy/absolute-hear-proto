@@ -426,7 +426,7 @@
      À l'apparition (et à chaque appui sur la note), une onde de choc part du centre. */
   const fete = (() => {
     const toile = $("fete"), ctx = toile.getContext("2d");
-    let actif = false, t0 = 0, choc = 0, teinteNote = "#e9c27a", id = 0;
+    let actif = false, t0 = 0, choc = 0, teinteNote = "#e9c27a", id = 0, centre = $("fin-pastille");
     const melanger = (hex, vers, k) => {
       const c = (h, i) => parseInt(h.slice(1 + 2 * i, 3 + 2 * i), 16);
       return "#" + [0, 1, 2].map((i) => Math.round(c(hex, i) + (c(vers, i) - c(hex, i)) * k).toString(16).padStart(2, "0")).join("");
@@ -438,10 +438,10 @@
       if (toile.width !== Math.round(L * ratio)) { toile.width = Math.round(L * ratio); toile.height = Math.round(H * ratio); }
       ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
       ctx.clearRect(0, 0, L, H);
-      const med = $("fin-pastille").getBoundingClientRect(), cadre = toile.getBoundingClientRect();
+      const med = centre.getBoundingClientRect(), cadre = toile.getBoundingClientRect();
       const cx = med.left + med.width / 2 - cadre.left, cy = med.top + med.height / 2 - cadre.top;
       const t = (maintenant - t0) / 1000, tc = (maintenant - choc) / 1000;
-      const R = Math.hypot(L, H) * 0.62, r0 = med.width / 2;
+      const R = Math.hypot(L, H) * 0.62, r0 = Math.min(med.width, med.height) / 2;
       const lueur = ctx.createRadialGradient(cx, cy, r0, cx, cy, R * 0.8);
       lueur.addColorStop(0, melanger(teinteNote, "#16141d", 0.45));
       lueur.addColorStop(1, "rgba(22,20,29,0)");
@@ -489,7 +489,7 @@
       id = requestAnimationFrame(image);
     }
     return {
-      lancer(c) { teinteNote = c; actif = true; t0 = performance.now(); choc = t0 + 300; cancelAnimationFrame(id); id = requestAnimationFrame(image); },
+      lancer(c, element) { centre = element || $("fin-pastille"); teinteNote = c; actif = true; t0 = performance.now(); choc = t0 + 300; cancelAnimationFrame(id); id = requestAnimationFrame(image); },
       eclat() { choc = performance.now(); },
       arreter() { actif = false; cancelAnimationFrame(id); ctx.clearRect(0, 0, toile.width, toile.height); },
     };
@@ -596,7 +596,13 @@
     poser();
   }
   $("lancer").addEventListener("click", lancer);
-  $("rejouer").addEventListener("click", async () => { fete.arreter(); await fondre(300); majLecture(); rendreAccueil(); });
+  $("rejouer").addEventListener("click", async () => {
+    if (aDevoiler) return devoiler();
+    fete.arreter();
+    await fondre(300);
+    majLecture();
+    rendreAccueil();
+  });
 
   function majStatut() {
     $("vies").innerHTML = Array.from({ length: VIES }, (_, i) => `<span class="${i < run.vies ? "" : "perdue"}">♥</span>`).join("");
@@ -793,37 +799,58 @@
     else poser();
     $("partie").classList.remove("entracte");
   }
+  /* Fin de partie en deux temps : d'abord le bilan (félicitations et score), puis, s'il y en a un, le nouveau morceau. */
+  let aDevoiler = null;
   function finir(victoire) {
     q = null;
     const record = run.score > S.record && run.score > 0;
     S.record = Math.max(S.record, run.score);
-    const nouveau = victoire ? prochain() : null;
-    if (nouveau) { S.liste.push(nouveau.id); S.palier[nouveau.id] = 0; }
+    aDevoiler = victoire ? prochain() : null;
+    if (aDevoiler) { S.liste.push(aDevoiler.id); S.palier[aDevoiler.id] = 0; }
     sauver();
     document.dispatchEvent(new CustomEvent("ah:fin", { detail: { victoire, score: run.score } }));
     vue("fin");
-    $("fin").classList.toggle("gagne", !!nouveau);
-    $("fin-sur").textContent = victoire ? "Liste terminée" : "Partie terminée";
-    $("fin-titre").textContent = victoire ? (nouveau ? "Nouveau morceau" : "Liste complète") : "Plus de vies";
-    $("fin-carte").hidden = !nouveau;
-    fete.arreter();
-    if (nouveau) {
-      $("fin").style.setProperty("--c", couleur(nouveau));
-      $("fin-pastille").textContent = nomCourt(nouveau);
-      $("fin-touche").textContent = nouveau.midis.length > 1 ? `en octaves · ${nouveau.midis.map(sci).join(" + ")}` : `nouvelle touche · ${sci(nouveau.midis[0])}`;
-      $("fin-comp").textContent = nouveau.compositeur;
-      $("fin-morceau").textContent = nouveau.titre;
-      $("fin-pastille").onclick = () => { fete.eclat(); extrait(nouveau, 1).catch(() => {}); };
-      fete.lancer(couleur(nouveau));
-      setTimeout(() => { if (!$("fin").hidden && lecteur.mode !== "ecoute") ecouter(nouveau).catch(() => {}); }, 900);
-    }
+    const fin = $("fin");
+    fin.className = "fin bilan" + (victoire ? " reussie" : "");
+    fin.style.removeProperty("--c");
+    $("fin-sur").textContent = victoire ? "Bravo" : "Partie terminée";
+    $("fin-titre").textContent = victoire ? "Partie réussie" : "Plus de vies";
+    $("fin-vies").innerHTML = Array.from({ length: VIES }, (_, i) => `<span class="${i < run.vies ? "" : "perdue"}">♥</span>`).join("");
+    $("fin-vies").hidden = false;
+    $("fin-carte").hidden = true;
+    document.querySelector(".score-fin").hidden = false;
     $("fin-record").hidden = !record;
     const zs = document.querySelector(".score-fin");
     zs.classList.remove("eclate");
     void zs.offsetWidth;
     zs.classList.add("eclate");
     compter($("fin-score"), run.score, "", 1400, 700);
+    $("rejouer").textContent = aDevoiler ? "Découvrir mon nouveau morceau" : "Continuer";
+    fete.arreter();
+    if (victoire) fete.lancer("#e9c27a", $("fin-score"));
     majTout();
+  }
+  function devoiler() {
+    const nouveau = aDevoiler, fin = $("fin");
+    aDevoiler = null;
+    fin.className = "fin gagne";
+    fin.style.setProperty("--c", couleur(nouveau));
+    $("fin-sur").textContent = "Débloqué";
+    $("fin-titre").textContent = "Nouveau morceau";
+    const t = $("fin-titre"); // le titre et la carte rejouent leur entrée
+    t.style.animation = "none"; void t.offsetWidth; t.style.animation = "";
+    $("fin-vies").hidden = true;
+    document.querySelector(".score-fin").hidden = true;
+    $("fin-carte").hidden = false;
+    $("fin-pastille").textContent = nomCourt(nouveau);
+    $("fin-touche").textContent = `nouvelle touche · ${sci(nouveau.midis[0])}`;
+    $("fin-comp").textContent = nouveau.compositeur;
+    $("fin-morceau").textContent = nouveau.titre;
+    $("fin-pastille").onclick = () => { fete.eclat(); extrait(nouveau, 1).catch(() => {}); };
+    $("rejouer").textContent = "Continuer";
+    fete.arreter();
+    fete.lancer(couleur(nouveau), $("fin-pastille"));
+    setTimeout(() => { if (!$("fin").hidden && lecteur.mode !== "ecoute") ecouter(nouveau).catch(() => {}); }, 900);
   }
 
   /* ---------- mises à jour d'affichage ---------- */
