@@ -664,6 +664,7 @@
     await fondre(200);
     majLecture();
     run = { file: melange(maListe()), i: 0, vies: VIES, score: 0 };
+    document.dispatchEvent(new CustomEvent("ah:debut"));
     vue("partie");
     poser();
   }
@@ -674,6 +675,7 @@
     await fondre(300);
     majLecture();
     rendreAccueil();
+    document.dispatchEvent(new CustomEvent("ah:accueil")); // retour d'une partie : c'est là que peut passer une publicité
   });
 
   const coeurs = (v) => Array.from({ length: VIES }, (_, i) => `<span class="${v >= i + 1 ? "" : v > i ? "demi" : "perdue"}">♥</span>`).join("");

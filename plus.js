@@ -38,6 +38,8 @@
     S.stats.parties++;
     if (e.detail.victoire) S.stats.victoires++;
     S.stats.jours[jour()] = (S.stats.jours[jour()] || 0) + 1;
+    // une publicité est due si le joueur n'est pas abonné, que la partie a duré, et que la précédente n'est pas trop récente
+    pubDue = !S.profil.premium && (Date.now() - debutPartie) / 1000 >= PUB.partieMin && (Date.now() - dernierePub) / 1000 >= PUB.delaiMin;
     AH.sauver();
   });
 
@@ -49,18 +51,127 @@
     for (let i = 0; i < 7; i++) { html += `<span class="${S.stats.jours[jour(d)] ? "ok" : ""}${i === 6 ? " auj" : ""}">${lettres[d.getDay()]}</span>`; d.setDate(d.getDate() + 1); }
     return html;
   }
+  /* ---------- volets : petites feuilles qui montent du bas (création de profil, premium, classement, textes légaux) ---------- */
+  function volet(html, classe) {
+    document.querySelectorAll(".volet").forEach((v) => v.remove());
+    const v = document.createElement("div");
+    v.className = "volet " + (classe || "");
+    v.innerHTML = `<div class="volet-fond"></div><div class="volet-panneau"><span class="poignee"></span>${html}</div>`;
+    const fermer = () => v.remove();
+    v.querySelector(".volet-fond").addEventListener("click", fermer);
+    v.querySelectorAll("[data-fermer]").forEach((b) => b.addEventListener("click", fermer));
+    $("app").appendChild(v);
+    return v;
+  }
+
+  /* ---------- compte : dans le proto, le profil est gardé sur l'appareil ; l'inscription réelle viendra avec le serveur ---------- */
+  function creerProfil(raison) {
+    const v = volet(`
+      <p class="surtitre">${raison || "Profil"}</p>
+      <h2>Garde ta progression</h2>
+      <button class="ligne compte" data-bientot="La connexion Google arrive avec le serveur"><span class="g">G</span><b>Continuer avec Google</b><em>bientôt</em></button>
+      <button class="ligne compte sombre" data-bientot="La connexion Apple arrive avec le serveur"><span class="g a"></span><b>Continuer avec Apple</b><em>bientôt</em></button>
+      <p class="ou">ou</p>
+      <input id="pf-nom" class="champ" placeholder="Prénom" autocomplete="given-name" maxlength="24" value="${S.profil.cree ? S.profil.nom : ""}">
+      <input id="pf-mail" class="champ" type="email" placeholder="Adresse e-mail" autocomplete="email" value="${S.profil.email || ""}">
+      <label class="case"><input id="pf-news" type="checkbox" ${S.profil.nouvelles ? "checked" : ""}><span>Recevoir les nouveautés par e-mail</span></label>
+      <button id="pf-ok" class="bouton plein grand">Créer mon profil</button>
+      <button class="lien" data-fermer>Plus tard</button>
+      <p class="demo">Prototype : rien n'est envoyé, le profil reste sur cet appareil.</p>`);
+    v.querySelectorAll("[data-bientot]").forEach((b) => b.addEventListener("click", () => AH.toast(b.dataset.bientot)));
+    v.querySelector("#pf-ok").addEventListener("click", () => {
+      const nom = v.querySelector("#pf-nom").value.trim(), mail = v.querySelector("#pf-mail").value.trim();
+      if (!nom) return AH.toast("Il manque ton prénom");
+      if (!/^\S+@\S+\.\S+$/.test(mail)) return AH.toast("L'adresse e-mail semble incomplète");
+      Object.assign(S.profil, { nom, email: mail, nouvelles: v.querySelector("#pf-news").checked, cree: true, depuis: S.profil.depuis || jour() });
+      AH.sauver();
+      v.remove();
+      AH.toast("Profil créé");
+      if (ecranProfil) rendreProfil();
+    });
+  }
+
+  /* ---------- premium : l'offre sans publicité (simulée) ---------- */
+  function offrePremium() {
+    const v = volet(`
+      <p class="surtitre">Premium</p>
+      <h2>Tout Absolute Hear, sans publicité</h2>
+      <ul class="atouts"><li>Aucune publicité</li><li>Tous les morceaux</li><li>Écoute hors ligne</li></ul>
+      <div class="formules">
+        <button class="formule" data-f="an"><b>Annuel</b><small>prix à définir</small><em>le plus choisi</em></button>
+        <button class="formule" data-f="mois"><b>Mensuel</b><small>prix à définir</small></button>
+      </div>
+      <button id="pm-ok" class="bouton plein grand">${S.profil.premium ? "Revenir à la version gratuite" : "Essayer Premium"}</button>
+      <button class="lien" data-fermer>Pas maintenant</button>
+      <p class="demo">Prototype : aucun paiement, l'abonnement est simulé.</p>`);
+    v.querySelectorAll(".formule").forEach((b) => b.addEventListener("click", () => { v.querySelectorAll(".formule").forEach((x) => x.classList.toggle("on", x === b)); }));
+    v.querySelector(".formule").classList.add("on");
+    v.querySelector("#pm-ok").addEventListener("click", () => {
+      S.profil.premium = !S.profil.premium;
+      AH.sauver();
+      v.remove();
+      AH.toast(S.profil.premium ? "Premium activé (simulation)" : "Version gratuite");
+      if (ecranProfil) rendreProfil();
+    });
+  }
+
+  /* ---------- publicité de fin de partie (simulée) ----------
+     Règles : jamais pour un abonné, jamais après une partie très courte, et un délai minimum entre deux publicités. */
+  const PUB = { partieMin: 40, delaiMin: 180, duree: 5 };
+  let debutPartie = 0, dernierePub = 0, pubDue = false;
+  document.addEventListener("ah:debut", () => { debutPartie = Date.now(); });
+  function montrerPub() {
+    const el = document.createElement("div");
+    el.className = "pub";
+    el.innerHTML = `<p class="pub-etiquette">Publicité</p><div class="pub-cadre"><b>Emplacement publicitaire</b><small>plein écran, entre deux parties</small></div>
+      <button id="pub-premium" class="bouton">Supprimer les publicités</button><button id="pub-fermer" class="bouton plein" disabled></button>`;
+    $("app").appendChild(el);
+    const fermer = el.querySelector("#pub-fermer");
+    let reste = PUB.duree;
+    const tic = () => { fermer.textContent = reste > 0 ? `Continuer dans ${reste}` : "Continuer"; fermer.disabled = reste > 0; if (reste-- > 0) setTimeout(tic, 1000); };
+    tic();
+    fermer.addEventListener("click", () => el.remove());
+    el.querySelector("#pub-premium").addEventListener("click", () => { el.remove(); offrePremium(); });
+  }
+  document.addEventListener("ah:accueil", () => {
+    if (pubDue) { pubDue = false; dernierePub = Date.now(); montrerPub(); }
+    else if (!S.profil.cree && S.stats.victoires > 0 && !S.profil.relance) { S.profil.relance = jour(); AH.sauver(); creerProfil("Sans profil, la progression n'est pas gardée"); }
+  });
+
+  /* ---------- classement (données de démonstration) ---------- */
+  function classement() {
+    const faux = [["Camille", 2840], ["Noé", 2310], ["Inès", 1975], ["Lucas", 1620], ["Jade", 1380], ["Hugo", 990], ["Lina", 640], ["Tom", 410]];
+    const lignes = [...faux, [S.profil.cree ? S.profil.nom : "Toi", S.record, true]].sort((x, y) => y[1] - x[1]);
+    const v = volet(`
+      <p class="surtitre">Classement</p>
+      <h2>Meilleurs scores</h2>
+      <div class="onglets-cl"><button class="on">Cette semaine</button><button data-bientot="Les amis arrivent avec les comptes">Amis</button><button data-bientot="Le classement mondial arrive avec le serveur">Monde</button></div>
+      <ol class="classement">${lignes.map((l, i) => `<li class="${l[2] ? "moi" : ""}"><span>${i + 1}</span><b>${l[0]}</b><i>${l[1]}</i></li>`).join("")}</ol>
+      <p class="demo">Prototype : les autres joueurs sont fictifs, seul ton record est réel.</p>
+      <button class="bouton plein grand" data-fermer>Fermer</button>`);
+    v.querySelectorAll("[data-bientot]").forEach((b) => b.addEventListener("click", () => AH.toast(b.dataset.bientot)));
+  }
+
+  /* ---------- textes légaux et état du compte ---------- */
+  function texte(titre, corps) {
+    volet(`<p class="surtitre">Informations</p><h2>${titre}</h2><div class="texte-legal">${corps}</div><button class="bouton plein grand" data-fermer>Fermer</button>`);
+  }
+  const A_REDIGER = "<p>Texte à rédiger avant la mise en ligne.</p>";
+
+  let ecranProfil = false;
   function rendreProfil() {
     const liste = AH.maListe(), acquises = liste.filter((p) => S.acquis[p.id]).length;
     const precision = S.stats.reponses ? Math.round((100 * S.stats.justes) / S.stats.reponses) : 0;
     const tempsMoyen = S.stats.reponses ? (S.stats.temps / S.stats.reponses).toFixed(1) : "–";
-    const enr = Object.values(AH.ENR);
+    const enr = Object.values(AH.ENR), cree = S.profil.cree;
     $("ecran-profil").innerHTML = `
       <div class="profil-defile">
         <div class="carte-profil">
-          <span class="avatar">${S.profil.nom[0].toUpperCase()}</span>
-          <div class="qui"><b>${S.profil.nom}</b><small>Progression gardée sur cet appareil</small></div>
+          <span class="avatar">${(cree ? S.profil.nom : "?")[0].toUpperCase()}</span>
+          <div class="qui"><b>${cree ? S.profil.nom : "Invité"}</b><small>${cree ? S.profil.email : "Progression non gardée"}</small></div>
+          ${S.profil.premium ? '<span class="insigne">Premium</span>' : ""}
         </div>
-        <button class="ligne compte" data-bientot="La connexion arrive avec la sauvegarde en ligne"><span class="g">G</span><b>Continuer avec Google</b><em>bientôt</em></button>
+        ${cree ? "" : '<button id="pf-creer" class="bouton plein grand">Créer mon profil</button>'}
 
         <div class="bloc serie">
           <div class="flamme"><b>${serie()}</b><small>jour${serie() > 1 ? "s" : ""} d'affilée</small></div>
@@ -76,7 +187,12 @@
           <div><b>${tempsMoyen}<i> s</i></b><small>par réponse</small></div>
         </div>
 
-        <button id="partager" class="bouton plein grand">Partager mon clavier</button>
+        <button id="cl-ouvrir" class="ligne fort"><b>Classement</b><em>démo</em></button>
+        <button id="partager" class="ligne fort"><b>Partager mon clavier</b></button>
+
+        <p class="rubrique">Abonnement</p>
+        <button id="pm-ouvrir" class="ligne"><b>${S.profil.premium ? "Premium actif" : "Passer en Premium"}</b><em>${S.profil.premium ? "simulé" : "sans pub"}</em></button>
+        <button class="ligne" id="pub-test"><b>Voir une publicité d'exemple</b></button>
 
         <p class="rubrique">Écouter ailleurs</p>
         <button class="ligne" data-bientot="La playlist Spotify sera liée ici"><b>Spotify</b><em>bientôt</em></button>
@@ -86,25 +202,35 @@
         <p class="rubrique">Réglages</p>
         <div class="ligne"><b>Nom des notes</b><span class="choix2" id="reg-notation"><button data-v="fr" class="${S.reglages.notation === "fr" ? "on" : ""}">do ré mi</button><button data-v="en" class="${S.reglages.notation === "en" ? "on" : ""}">C D E</button></span></div>
         <div class="ligne"><b>Vibrations</b><span class="choix2" id="reg-vibration"><button data-v="1" class="${S.reglages.vibration ? "on" : ""}">oui</button><button data-v="" class="${S.reglages.vibration ? "" : "on"}">non</button></span></div>
+        <div class="ligne"><b>Rappel quotidien</b><em>bientôt</em></div>
         <button class="ligne" id="revoir"><b>Revoir l'introduction</b></button>
         <button class="ligne" id="installer" hidden><b>Installer l'application</b><em>gratuit</em></button>
-        <button class="ligne" data-bientot="L'offre complète arrive avec le catalogue étendu"><b>Version complète</b><em>bientôt</em></button>
-        <button class="ligne danger" id="remise"><b>Recommencer à zéro</b></button>
 
-        <p class="rubrique">Crédits</p>
-        <details class="credits"><summary>Enregistrements et partitions</summary>
-          ${enr.map((e) => `<p><b>${e.titre}</b> · ${e.interprete || "interprète non précisé"} · ${e.licence} · <a href="${e.source}" target="_blank" rel="noopener">source</a></p>`).join("")}
-          <p>Partitions : base PDMX (CC BY 4.0). Sons de piano : Salamander Grand Piano (CC BY 3.0).</p>
-        </details>
-        <details class="credits"><summary>Confidentialité</summary><p>Ta progression reste sur cet appareil. Aucun compte, aucun suivi, aucune donnée envoyée.</p></details>
+        <p class="rubrique">Compte</p>
+        <div class="ligne"><b>État</b><small class="droite">${cree ? "Profil créé le " + (S.profil.depuis || jour()).split("-").reverse().join("/") : "Invité"}</small></div>
+        <div class="ligne"><b>Abonnement</b><small class="droite">${S.profil.premium ? "Premium (simulé)" : "Gratuit, avec publicités"}</small></div>
+        ${cree ? '<button class="ligne" id="pf-modifier"><b>Modifier mon profil</b></button>' : ""}
+        <button class="ligne" data-texte="Conditions d'utilisation"><b>Conditions d'utilisation</b></button>
+        <button class="ligne" data-texte="Politique de confidentialité"><b>Politique de confidentialité</b></button>
+        <button class="ligne" data-texte="Mentions légales"><b>Mentions légales</b></button>
+        <button class="ligne" id="credits"><b>Crédits des enregistrements</b></button>
+        <button class="ligne danger" id="remise"><b>${cree ? "Supprimer mon compte et mes données" : "Recommencer à zéro"}</b></button>
         <p class="version">Absolute Hear · prototype</p>
       </div>`;
+    const sur = (id, fn) => { const el = $(id); if (el) el.addEventListener("click", fn); };
     document.querySelectorAll("#ecran-profil [data-bientot]").forEach((b) => b.addEventListener("click", () => AH.toast(b.dataset.bientot)));
+    document.querySelectorAll("#ecran-profil [data-texte]").forEach((b) => b.addEventListener("click", () => texte(b.dataset.texte, A_REDIGER)));
     document.querySelectorAll("#reg-notation button").forEach((b) => b.addEventListener("click", () => { S.reglages.notation = b.dataset.v; AH.sauver(); appliquerNotation(); rendreProfil(); AH.rendreAccueil(); }));
     document.querySelectorAll("#reg-vibration button").forEach((b) => b.addEventListener("click", () => { S.reglages.vibration = !!b.dataset.v; AH.sauver(); rendreProfil(); }));
-    $("partager").addEventListener("click", partager);
-    $("revoir").addEventListener("click", accueillir);
-    $("remise").addEventListener("click", () => {
+    sur("pf-creer", () => creerProfil());
+    sur("pf-modifier", () => creerProfil());
+    sur("cl-ouvrir", classement);
+    sur("pm-ouvrir", offrePremium);
+    sur("pub-test", montrerPub);
+    sur("partager", partager);
+    sur("revoir", accueillir);
+    sur("credits", () => texte("Crédits", enr.map((e) => `<p><b>${e.titre}</b><br>${e.interprete || "interprète non précisé"} · ${e.licence}</p>`).join("") + "<p>Partitions : base PDMX (CC BY 4.0). Sons de piano : Salamander Grand Piano (CC BY 3.0).</p>"));
+    sur("remise", () => {
       const b = $("remise");
       if (!b.dataset.sur) { b.dataset.sur = "1"; b.querySelector("b").textContent = "Toucher encore pour tout effacer"; return; }
       try { localStorage.removeItem("absolute-hear-3"); } catch (e) { /* ignoré */ }
@@ -114,7 +240,7 @@
     inst.hidden = !invite;
     inst.addEventListener("click", async () => { if (invite) { invite.prompt(); invite = null; inst.hidden = true; } });
   }
-  document.addEventListener("ah:ecran", (e) => { if (e.detail === "profil") rendreProfil(); });
+  document.addEventListener("ah:ecran", (e) => { ecranProfil = e.detail === "profil"; if (ecranProfil) rendreProfil(); });
 
   /* ---------- partage : une image de son clavier ---------- */
   async function partager() {
