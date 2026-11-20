@@ -486,3 +486,35 @@ p { margin: 0; }
 /* un seul cœur, qui peut être entamé de moitié */
 .vies .demi { background: linear-gradient(90deg, var(--faux) 50%, rgba(255, 255, 255, .2) 50%); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .vies { font-size: 1.35rem; }
+
+/* ================= la playlist : un lecteur de musique ================= */
+#ecran-liste { padding-top: 26px; }
+.pl-tete { display: flex; align-items: flex-end; gap: 16px; padding: 0 20px; }
+.pl-pochette { width: 104px; height: 104px; border-radius: 16px; overflow: hidden; display: flex; flex: none; box-shadow: 0 14px 34px rgba(0, 0, 0, .5); background: var(--surface); }
+.pl-pochette i { flex: 1; filter: saturate(.9); }
+.pl-titre h2 { font-size: 1.9rem; margin-top: 4px; }
+.pl-commandes { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px 8px; }
+.pl-tri { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 999px; background: var(--surface); font-size: .84rem; font-weight: 500; color: var(--texte); }
+.pl-lire { width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center; background: var(--or); color: var(--or-fonce); box-shadow: 0 10px 26px rgba(233, 194, 122, .35); transition: transform .12s; }
+.pl-lire:active { transform: scale(.94); }
+.liste { padding: 0 8px 8px; gap: 0; }
+.piste { display: flex; align-items: center; gap: 12px; width: 100%; padding: 11px 12px; border-radius: 14px; text-align: left; transition: background .2s; }
+.piste:active { background: var(--surface); }
+.piste .rang-n { width: 22px; text-align: center; color: var(--discret); font-size: .86rem; font-variant-numeric: tabular-nums; flex: none; }
+.piste .texte { flex: 1; min-width: 0; }
+.piste b { display: block; font-family: var(--titre); font-weight: 600; font-size: 1.04rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.piste small { display: block; color: var(--discret); font-size: .82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.piste .niveau { display: flex; gap: 3px; flex: none; }
+.piste .niveau i { width: 5px; height: 5px; border-radius: 50%; background: var(--surface-2); }
+.piste .niveau i.ok { background: var(--c); }
+.piste .note { width: 34px; text-align: right; font-family: var(--titre); font-weight: 600; font-size: .95rem; color: var(--c); flex: none; }
+.piste.encours { background: color-mix(in srgb, var(--c) 14%, transparent); }
+.piste.encours b { color: color-mix(in srgb, var(--c) 60%, #fff); }
+.piste.cache { opacity: .45; }
+/* le petit égaliseur de la piste en cours */
+.piste em { display: inline-flex; align-items: flex-end; gap: 2px; height: 14px; }
+.piste em i { width: 3px; border-radius: 2px; background: var(--c); animation: egal .9s ease-in-out infinite alternate; }
+.piste em i:nth-child(2) { animation-delay: -.3s; }
+.piste em i:nth-child(3) { animation-delay: -.6s; }
+.piste.enpause em i { animation-play-state: paused; }
+@keyframes egal { from { height: 3px; } to { height: 14px; } }

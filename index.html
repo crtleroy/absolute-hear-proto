@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Absolute Hear">
-<link rel="stylesheet" href="style.css?v=36">
+<link rel="stylesheet" href="style.css?v=37">
 </head>
 <body>
 <div id="app">
@@ -78,9 +78,13 @@
     <section id="ecran-profil" class="ecran"></section>
 
     <section id="ecran-liste" class="ecran">
-      <div class="entete">
-        <p class="surtitre">Ma liste</p>
-        <p id="pl-resume" class="indice"></p>
+      <div class="pl-tete">
+        <div id="pl-pochette" class="pl-pochette" aria-hidden="true"></div>
+        <div class="pl-titre"><p class="surtitre">Playlist</p><h2>Mes morceaux</h2><p id="pl-resume" class="indice"></p></div>
+      </div>
+      <div class="pl-commandes">
+        <button id="pl-tri" class="pl-tri"></button>
+        <button id="pl-lire" class="pl-lire" aria-label="Lire la playlist"></button>
       </div>
       <div id="pl-liste" class="liste"></div>
     </section>
@@ -101,7 +105,7 @@
     </button>
     <button data-ecran="liste">
       <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h11M4 12h11M4 17h7"/><path d="M19 9v7.5"/><circle cx="17" cy="17" r="2"/></svg>
-      <span>Ma liste <i id="pl-badge"></i></span>
+      <span>Playlist<i id="pl-badge"></i></span>
     </button>
     <button data-ecran="profil">
       <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="8.5" r="3.6"/><path d="M5 20c.8-3.6 3.6-5.4 7-5.4s6.2 1.8 7 5.4"/></svg>
@@ -138,9 +142,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.8.9/build/opensheetmusicdisplay.min.js"></script>
-<script src="data/enregistrements.js?v=36"></script>
-<script src="data/pieces.js?v=36"></script>
-<script src="app.js?v=36"></script>
-<script src="plus.js?v=36"></script>
+<script src="data/enregistrements.js?v=37"></script>
+<script src="data/pieces.js?v=37"></script>
+<script src="app.js?v=37"></script>
+<script src="plus.js?v=37"></script>
 </body>
 </html>

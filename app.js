@@ -274,31 +274,48 @@
   document.querySelectorAll(".onglets button").forEach((b) => b.addEventListener("click", () => aller(b.dataset.ecran)));
 
   /* ---------- ma liste : le lecteur ---------- */
-  function rendreListe() {
-    const zone = $("pl-liste");
+  /* L'ordre d'écoute. Par défaut, les morceaux qu'on connaît le moins passent en premier :
+     jamais essayés, puis paliers les plus bas ; les notes acquises ferment la marche. */
+  function listeTriee() {
     const liste = maListe();
-    const reels = liste.filter((p) => ENR[p.titre]).length;
-    $("pl-resume").textContent = `${liste.length} morceaux · ${reels} en vrai enregistrement`;
+    if (S.tri === "ordre") return liste;
+    const connu = (p) => (S.acquis[p.id] ? 100 : !(S.essaye[p.id] || S.palier[p.id] > 0) ? -1 : palier(p) * 3 + niveauNote(p));
+    return liste.map((p, i) => [p, i]).sort((x, y) => connu(x[0]) - connu(y[0]) || x[1] - y[1]).map((x) => x[0]);
+  }
+  function rendreListe() {
+    const liste = listeTriee();
+    const enLecture = lecteur.mode === "ecoute" && lecteur.joue;
+    $("pl-resume").textContent = `${liste.length} morceau${liste.length > 1 ? "x" : ""}`;
+    $("pl-pochette").innerHTML = maListe().map((p) => `<i style="background:${couleur(p)}"></i>`).join("");
+    $("pl-lire").innerHTML = enLecture && !lecteur.pause ? ICONE.pause : ICONE.lire;
+    $("pl-tri").innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M7 12h10M10 17h4"/></svg>${S.tri === "ordre" ? "Ordre de découverte" : "Moins connus d'abord"}`;
+    const zone = $("pl-liste");
     zone.innerHTML = "";
-    liste.forEach((p) => {
-      const r = document.createElement("div");
-      const actif = lecteur.piece === p && lecteur.mode === "ecoute" && lecteur.joue;
-      r.className = "rang" + (actif ? " encours" : "");
-      r.innerHTML = `<button class="rond" aria-label="Écouter">${actif && !lecteur.pause ? ICONE.pause : ICONE.lire}</button>
-        <button class="texte"><b>${p.titre}</b><small>${p.compositeur} · ${PALIERS[palier(p)]}</small></button>
-        <span class="etoiles">${[0, 1, 2, 3, 4].map((i) => `<i class="${palier(p) >= i ? "ok" : ""}"></i>`).join("")}</span>
-        <span class="pastille" style="--c:${couleur(p)}">${nomCourt(p)}</span>`;
-      r.querySelector(".rond").addEventListener("click", () => ecouter(p, maListe()));
-      r.querySelector(".texte").addEventListener("click", () => ouvrirFiche(p));
+    liste.forEach((p, i) => {
+      const actif = enLecture && lecteur.piece === p;
+      const r = document.createElement("button");
+      r.className = "piste" + (actif ? " encours" : "") + (actif && lecteur.pause ? " enpause" : "");
+      r.style.setProperty("--c", couleur(p));
+      r.innerHTML = `<span class="rang-n">${actif ? "<em><i></i><i></i><i></i></em>" : i + 1}</span>
+        <span class="texte"><b>${p.titre}</b><small>${p.compositeur}</small></span>
+        <span class="niveau">${[0, 1, 2, 3, 4].map((k) => `<i class="${palier(p) >= k && (S.essaye[p.id] || S.palier[p.id] > 0) ? "ok" : ""}"></i>`).join("")}</span>
+        <span class="note">${nomCourt(p)}</span>`;
+      r.addEventListener("click", () => ecouter(p, listeTriee()));
       zone.appendChild(r);
     });
     if (prochain()) {
       const r = document.createElement("div");
-      r.className = "rang cache";
-      r.innerHTML = `<span class="rond">?</span><span class="texte"><b>Morceau suivant</b><small>Termine une partie pour le débloquer</small></span>`;
+      r.className = "piste cache";
+      r.innerHTML = `<span class="rang-n">?</span><span class="texte"><b>Prochain morceau</b><small>à débloquer en terminant une partie</small></span>`;
       zone.appendChild(r);
     }
   }
+  $("pl-lire").addEventListener("click", () => {
+    const liste = listeTriee();
+    if (lecteur.mode === "ecoute" && lecteur.joue) return ecouter(lecteur.piece, lecteur.file);
+    if (liste.length) ecouter(liste[0], liste);
+  });
+  $("pl-tri").addEventListener("click", () => { S.tri = S.tri === "ordre" ? "connu" : "ordre"; sauver(); rendreListe(); });
 
   /* ---------- fiche (feuille du bas) ---------- */
   const fiche = { piece: null, suite: null };
@@ -927,7 +944,7 @@
     majFiche();
   }
   function majTout() {
-    $("pl-badge").textContent = `· ${S.liste.length}`;
+    $("pl-badge").textContent = "";
     majLecture();
   }
   $("mini-lecture").addEventListener("click", () => ecouter(lecteur.piece, lecteur.file));
