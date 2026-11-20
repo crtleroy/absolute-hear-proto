@@ -445,6 +445,8 @@
     ctx.beginPath(); ctx.moveTo(-6, 2); ctx.bezierCurveTo(-18, 6, -14, 26, -2, 22); ctx.stroke();
     ctx.restore();
   }
+  const logo = new Image();
+  logo.src = "logo-signe.svg";
   function scene4(ctx, L, H, t) {
     const cx = L / 2, cy = H * 0.38, R = L * 0.95;
     nappe(ctx, cx, cy, L * 0.9, C[Math.floor(t * 0.5) % 12], 0.16);
@@ -455,7 +457,8 @@
     ctx.globalCompositeOperation = "source-over";
     ctx.globalAlpha = 1; ctx.fillStyle = "#14121a";
     ctx.beginPath(); ctx.arc(cx, cy, 92, 0, Math.PI * 2); ctx.fill();
-    oreille(ctx, cx - 4, cy, 0.92);
+    if (logo.complete && logo.naturalWidth) { ctx.globalAlpha = 1; ctx.drawImage(logo, cx - 100, cy - 100, 200, 200); } // le logo de l'appli
+    else oreille(ctx, cx - 4, cy, 0.92); // repli si l'image n'est pas chargée
     for (let k = 0; k < 2; k++) { // deux flèches qui tournent : on apprend, on recommence
       const a0 = t * 0.9 + k * Math.PI, a1 = a0 + 2.1, r = 124;
       ctx.strokeStyle = "#fff3d6"; ctx.fillStyle = "#fff3d6"; ctx.globalAlpha = 0.9; ctx.lineWidth = 4; ctx.lineCap = "round"; ctx.shadowColor = "#e9c27a"; ctx.shadowBlur = 12;

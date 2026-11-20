@@ -565,3 +565,6 @@ p { margin: 0; }
 .pub-etiquette { font-size: .68rem; letter-spacing: .2em; text-transform: uppercase; color: var(--discret); }
 .pub-cadre { flex: 1; display: grid; place-content: center; text-align: center; gap: 6px; border-radius: 26px; border: 1.5px dashed var(--trait); color: var(--discret); }
 .pub-cadre b { font-family: var(--titre); font-size: 1.4rem; color: var(--texte); }
+
+.marque { display: flex; align-items: center; gap: 8px; }
+.marque img { display: block; margin: -4px 0; }
