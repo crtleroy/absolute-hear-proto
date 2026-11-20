@@ -510,6 +510,63 @@
     $("acc-liste").textContent = S.liste.length;
     $("acc-record").textContent = S.record;
     rendreClavierAccueil();
+    fondPartitions();
+  }
+
+  /* Filigrane de l'accueil : trois partitions du jeu, en silhouette, qui glissent très lentement derrière le pourcentage. */
+  let fondFait = "";
+  async function fondPartitions() {
+    const zone = $("acc-fond"), signature = String(S.liste.length);
+    if (!zone || fondFait === signature) return;
+    fondFait = signature;
+    zone.innerHTML = "";
+    for (const [i, p] of melange(maListe()).slice(0, 3).entries()) {
+      const d = document.createElement("div");
+      d.className = "pf pf" + i;
+      zone.appendChild(d);
+      try {
+        const xml = await chargerPartition(p.id);
+        const osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay(d, { autoResize: false, drawTitle: false, drawSubtitle: false, drawComposer: false, drawLyricist: false, drawPartNames: false, drawingParameters: "compacttight" });
+        await osmd.load(xml);
+        osmd.zoom = 1.15;
+        osmd.render();
+      } catch (e) { d.remove(); }
+    }
+  }
+
+  /* Au départ d'une partie : des ondes de toutes les couleurs éclatent depuis le bouton et balaient l'écran. */
+  function eclater(bouton) {
+    const toile = document.createElement("canvas");
+    toile.className = "eclat-depart";
+    $("app").appendChild(toile);
+    const ratio = Math.min(2, window.devicePixelRatio || 1), L = toile.clientWidth, H = toile.clientHeight;
+    toile.width = Math.round(L * ratio);
+    toile.height = Math.round(H * ratio);
+    const ctx = toile.getContext("2d"), b = bouton.getBoundingClientRect(), c = toile.getBoundingClientRect();
+    const cx = b.left + b.width / 2 - c.left, cy = b.top + b.height / 2 - c.top, R = Math.hypot(L, H) * 1.05, t0 = performance.now(), duree = 1100;
+    function image(maintenant) {
+      const k = Math.min(1, (maintenant - t0) / duree), e = 1 - Math.pow(1 - k, 2.4);
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      ctx.clearRect(0, 0, L, H);
+      ctx.globalCompositeOperation = "lighter";
+      for (let j = 0; j < 14; j++) {
+        const r = Math.max(0, e * R * (1 - j * 0.065));
+        if (r < 4) continue;
+        ctx.beginPath();
+        for (let n = 0; n <= 80; n++) {
+          const th = (n / 80) * Math.PI * 2, d = 1 + e * (0.05 * Math.sin(5 * th + j * 1.3) + 0.025 * Math.sin(11 * th - j));
+          const x = cx + Math.cos(th) * r * d, y = cy + Math.sin(th) * r * d;
+          if (n) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+        }
+        ctx.strokeStyle = COULEURS[(j * 5) % 12];
+        ctx.globalAlpha = Math.pow(1 - k, 1.1) * (1 - j * 0.04);
+        ctx.lineWidth = 1 + 3 * (1 - k);
+        ctx.stroke();
+      }
+      if (k < 1) requestAnimationFrame(image); else toile.remove();
+    }
+    requestAnimationFrame(image);
+    setTimeout(() => toile.remove(), duree + 600); // filet de sécurité si l'animation est suspendue
   }
 
   /* ---------- la fête : des ondes fines qui naissent de la note ----------
@@ -675,6 +732,7 @@
 
   /* ---------- la partie ---------- */
   async function lancer() {
+    if (!$("accueil").hidden) eclater($("lancer"));
     if (!son.dataset.ouvert && PIECES.some((p) => ENR[p.titre])) {
       son.dataset.ouvert = "1";
       son.muted = true;

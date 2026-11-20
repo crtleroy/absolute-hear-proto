@@ -643,3 +643,20 @@ p { margin: 0; }
 .courbes b { display: block; font-family: var(--titre); font-size: 1.6rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
 .courbes b i { font-style: normal; font-size: .85rem; color: var(--discret); font-family: "Inter", sans-serif; font-weight: 400; }
 .courbe { display: block; width: calc(100% + 28px); margin: 6px -14px 0; height: 46px; }
+
+/* ================= accueil : pourcentage en vedette, partitions en filigrane, départ en ondes ================= */
+.accueil { position: relative; }
+.accueil > * { position: relative; z-index: 1; }
+.jauge-chiffre b { font-size: 8.4rem; letter-spacing: -.02em; }
+.jauge-chiffre span { font-size: 2.2rem; }
+.jauge-nom { margin: 2px 0 6px; font-size: .78rem; }
+.fond-partitions { position: absolute !important; z-index: 0 !important; left: -22px; right: -22px; top: -22px; height: 58%; overflow: hidden; pointer-events: none; opacity: .13; filter: invert(1);
+  -webkit-mask-image: linear-gradient(180deg, #000 25%, transparent 96%); mask-image: linear-gradient(180deg, #000 25%, transparent 96%); }
+.fond-partitions .pf { position: absolute; left: -8%; width: 170%; height: 36%; overflow: hidden; animation: glisse-p 80s ease-in-out infinite alternate; }
+.fond-partitions .pf0 { top: 0; }
+.fond-partitions .pf1 { top: 33%; animation-duration: 110s; animation-direction: alternate-reverse; }
+.fond-partitions .pf2 { top: 66%; animation-duration: 95s; }
+@keyframes glisse-p { from { transform: translateX(0); } to { transform: translateX(-30%); } }
+.eclat-depart { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 55; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .fond-partitions .pf { animation: none; } }
+.fond-partitions text { display: none; }
