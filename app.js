@@ -326,9 +326,7 @@
     $("f-note").textContent = p.midis.map(sci).join(" + ");
     $("f-titre").textContent = p.titre;
     $("f-comp").textContent = p.compositeur;
-    const bas = Math.max(21, Math.floor((Math.min(...p.midis) - 5) / 12) * 12);
-    const haut = Math.min(108, Math.max(bas + 23, Math.ceil((Math.max(...p.midis) + 6) / 12) * 12 - 1));
-    clavierPlein($("f-clavier"), bas, haut, p.midis);
+    grandClavier($("f-clavier"), niveauxTouches(), null, p.midis);
     const e = ENR[p.titre];
     $("f-credit").textContent = resultat ? "" : e ? `Enregistrement : ${e.interprete || "interprète non précisé"} · ${e.licence}` : "Écoute en rendu synthétique";
     $("f-suite").textContent = suite ? "Continuer" : "Fermer";
@@ -384,11 +382,12 @@
     return niv;
   }
   let niveauxVus = null; // ce que le clavier montrait la dernière fois, pour animer les touches qui ont progressé
-  function rendreClavierAccueil() {
-    const zone = $("acc-clavier"), niv = niveauxTouches();
+  /* Le grand clavier de l'appli (accueil, écran de validation) : 88 touches aux proportions réelles.
+     niv : niveau de chaque touche ; avant : niveaux déjà montrés (les touches qui ont progressé s'éveillent) ; ici : touches à mettre en avant. */
+  function grandClavier(zone, niv, avant, ici) {
     zone.innerHTML = "";
     const lb = 100 / 52;
-    let blanches = 0, allumees = 0, somme = 0;
+    let blanches = 0;
     for (let m = 21; m <= 108; m++) {
       const t = document.createElement("span"), n = niv[m] || 0;
       if (NOIRES.includes(m % 12)) {
@@ -399,17 +398,20 @@
         t.style.left = `${(blanches + decal) * lb - (lb * 0.583) / 2}%`;
       } else { t.className = "t tb"; blanches++; }
       if (n) {
-        allumees++;
-        somme += n;
         t.classList.add("n" + n);
         t.style.setProperty("--c", COULEURS[m % 12]);
-        if (niveauxVus && n > (niveauxVus[m] || 0)) t.classList.add("eveil");
+        if (avant && n > (avant[m] || 0)) t.classList.add("eveil");
       }
+      if (ici && ici.includes(m)) { t.classList.add("ici"); t.style.setProperty("--c", COULEURS[m % 12]); }
       zone.appendChild(t);
     }
+  }
+  function rendreClavierAccueil() {
+    const niv = niveauxTouches(), valeurs = Object.values(niv);
+    grandClavier($("acc-clavier"), niv, niveauxVus, null);
     niveauxVus = niv;
-    $("acc-jauge").textContent = Math.round((100 * somme) / (88 * 5));
-    $("acc-touches").innerHTML = `<b>${allumees}</b> / 88 touches`;
+    $("acc-jauge").textContent = Math.round((100 * valeurs.reduce((a, n) => a + n, 0)) / (88 * 5));
+    $("acc-touches").innerHTML = `<b>${valeurs.length}</b> / 88 touches`;
   }
   function rendreAccueil() {
     vue("accueil");
@@ -494,51 +496,77 @@
   })();
 
   /* ---------- nettoyage d'oreille : trois secondes de notes au hasard, chacune éclatant dans sa couleur ---------- */
+  const PHRASES = [
+    "Brouillage des oreilles", "Remise à zéro de l'écoute", "Rinçage des tympans", "On efface la note d'avant", "Secouage de cochlée",
+    "Amnésie musicale en cours", "Désaccordage provisoire", "On mélange les cartes", "Vidange auditive", "Oreilles en mode avion",
+    "Ne retenez rien", "Petit ménage dans les aigus", "Un instant, on brouille les pistes", "Réinitialisation du diapason", "Tout oublier, sauf le plaisir",
+  ];
+  let phrasePrecedente = -1;
   function rincer(duree = 3000) {
-    const toile = $("rincage"), ctx = toile.getContext("2d");
+    const toile = $("rincage"), ctx = toile.getContext("2d"), texte = $("rincage-texte");
+    let i = Math.floor(Math.random() * PHRASES.length);
+    if (i === phrasePrecedente) i = (i + 1) % PHRASES.length;
+    phrasePrecedente = i;
+    texte.innerHTML = PHRASES[i] + '<i>.</i><i>.</i><i>.</i>';
     toile.hidden = false;
+    texte.hidden = false;
     const ratio = Math.min(2, window.devicePixelRatio || 1);
     const L = toile.clientWidth, H = toile.clientHeight;
     toile.width = Math.round(L * ratio);
     toile.height = Math.round(H * ratio);
-    const impacts = [], debut = performance.now();
-    let dernier = -1, id = 0;
+    const impacts = [], debut = performance.now(), VIE = 2.4, portee = Math.hypot(L, H) * 0.75;
+    let id = 0;
     const note = () => { // cinq notes par seconde, sur tout le clavier utile
       const m = 36 + Math.floor(Math.random() * 54);
-      impacts.push({ x: L * (0.1 + 0.8 * Math.random()), y: H * (0.12 + 0.76 * Math.random()), t0: performance.now(), c: COULEURS[m % 12], g: Math.random() * 6, taille: 0.7 + Math.random() * 0.7 });
+      impacts.push({ x: L * (0.08 + 0.84 * Math.random()), y: H * (0.08 + 0.84 * Math.random()), t0: performance.now(), c: COULEURS[m % 12], g: Math.random() * 6, lambda: 26 + Math.random() * 22 });
       if (piano) { reveiller(); piano.triggerAttackRelease(Tone.Frequency(m, "midi").toFrequency(), 0.3, undefined, 0.4); }
     };
     const rythme = setInterval(() => { if (performance.now() - debut < duree - 150) note(); }, 200);
     note();
     function image(maintenant) {
       ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-      ctx.clearRect(0, 0, L, H);
+      ctx.globalCompositeOperation = "source-over";
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = "#0f0e14";
+      ctx.fillRect(0, 0, L, H);
       ctx.globalCompositeOperation = "lighter";
-      for (const im of impacts) {
-        const a = (maintenant - im.t0) / 1000, vie = 1.5;
-        if (a > vie) continue;
-        const k = 1 - Math.pow(1 - a / vie, 2.2);
-        for (let j = 0; j < 6; j++) {
-          const r = k * 150 * im.taille * (1 - j * 0.15);
+      const vivants = impacts.filter((im) => (maintenant - im.t0) / 1000 < VIE);
+      // 1. chaque impact teinte l'écran : une nappe de couleur qui s'étale et se mêle aux autres
+      for (const im of vivants) {
+        const a = (maintenant - im.t0) / 1000, k = 1 - Math.pow(1 - a / VIE, 2.4), r = 40 + k * portee * 0.55;
+        const nappe = ctx.createRadialGradient(im.x, im.y, 0, im.x, im.y, r);
+        nappe.addColorStop(0, im.c);
+        nappe.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.globalAlpha = 0.34 * Math.pow(1 - a / VIE, 1.3) * Math.min(1, a * 8);
+        ctx.fillStyle = nappe;
+        ctx.fillRect(im.x - r, im.y - r, 2 * r, 2 * r);
+      }
+      // 2. les ondes : chaque anneau est déformé par le passage des ondes des autres impacts
+      for (const im of vivants) {
+        const a = (maintenant - im.t0) / 1000, k = 1 - Math.pow(1 - a / VIE, 2);
+        for (let j = 0; j < 7; j++) {
+          const r = k * portee * 0.5 * (1 - j * 0.13);
+          if (r < 2) continue;
           ctx.beginPath();
-          for (let n = 0; n <= 72; n++) {
-            const th = (n / 72) * Math.PI * 2;
-            const d = 1 + k * (0.07 * Math.sin(4 * th + im.g + j * 0.7) + 0.035 * Math.sin(9 * th - a * 2.5 + im.g));
-            const x = im.x + Math.cos(th) * r * d, y = im.y + Math.sin(th) * r * d;
+          for (let n = 0; n <= 64; n++) {
+            const th = (n / 64) * Math.PI * 2;
+            let x = im.x + Math.cos(th) * r, y = im.y + Math.sin(th) * r, pousse = 0;
+            for (const autre of vivants) {
+              if (autre === im) continue;
+              const d = Math.hypot(x - autre.x, y - autre.y), b = (maintenant - autre.t0) / 1000;
+              pousse += Math.sin(d / autre.lambda - b * 7) * 13 * Math.exp(-d / 210) * (1 - b / VIE);
+            }
+            const rr = r + pousse + k * 6 * Math.sin(5 * th + im.g + j);
+            x = im.x + Math.cos(th) * rr;
+            y = im.y + Math.sin(th) * rr;
             if (n) ctx.lineTo(x, y); else ctx.moveTo(x, y);
           }
           ctx.strokeStyle = im.c;
-          ctx.globalAlpha = (1 - a / vie) * (1 - j * 0.13);
-          ctx.lineWidth = 0.6 + 1.6 * (1 - k);
+          ctx.globalAlpha = Math.pow(1 - a / VIE, 1.2) * (0.9 - j * 0.1);
+          ctx.lineWidth = 0.7 + 1.7 * (1 - k);
           ctx.stroke();
         }
-        ctx.beginPath();
-        ctx.arc(im.x, im.y, 5 + 26 * k * im.taille, 0, Math.PI * 2);
-        ctx.fillStyle = im.c;
-        ctx.globalAlpha = Math.max(0, 0.55 - a * 1.6);
-        ctx.fill();
       }
-      ctx.globalAlpha = 1;
       id = requestAnimationFrame(image);
     }
     id = requestAnimationFrame(image);
@@ -547,6 +575,7 @@
       cancelAnimationFrame(id);
       if (piano) piano.releaseAll();
       toile.hidden = true;
+      texte.hidden = true;
       ok();
     }, duree + 500));
   }
