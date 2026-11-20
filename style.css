@@ -470,3 +470,15 @@ p { margin: 0; }
 .grand-clavier.fiche { margin: 0 -22px 20px; }
 .grand-clavier .ici { animation: ici 1.6s ease-in-out infinite alternate !important; }
 .jauge-touches { position: relative; }
+
+/* ================= touches allumées de l'intérieur (plus de contour), néon surtout éteint ================= */
+/* la lumière est au cœur de la touche et s'estompe vers ses bords ; autour, un simple rayonnement, sans liseré */
+.grand-clavier .tn[class*=" n"] { background-image: none; box-shadow: 0 0 9px color-mix(in srgb, var(--c) 60%, transparent), 0 3px 20px color-mix(in srgb, var(--c) 35%, transparent);
+  background: radial-gradient(ellipse 95% 70% at 50% 66%, color-mix(in srgb, color-mix(in srgb, var(--c) 78%, #fff) var(--f), #050408) 0%, color-mix(in srgb, var(--c) var(--f), #050408) 48%, color-mix(in srgb, var(--c) calc(var(--f) * .45), #050408) 100%); }
+.grand-clavier .tn.n1 { --f: 55%; } .grand-clavier .tn.n2 { --f: 66%; } .grand-clavier .tn.n3 { --f: 77%; } .grand-clavier .tn.n4 { --f: 88%; } .grand-clavier .tn.n5 { --f: 100%; }
+.grand-clavier .tb[class*=" n"] { box-shadow: inset -1px 0 0 #0f0e14, 0 0 14px color-mix(in srgb, var(--c) 45%, transparent);
+  background: radial-gradient(ellipse 130% 60% at 50% 74%, color-mix(in srgb, color-mix(in srgb, var(--c) 72%, #fff) var(--f), #2b2931) 0%, color-mix(in srgb, var(--c) var(--f), #2b2931) 55%, color-mix(in srgb, var(--c) calc(var(--f) * .6), #2b2931) 100%); }
+.grand-clavier .tn.ici { background: radial-gradient(ellipse 95% 70% at 50% 66%, #fff 0%, var(--c) 50%, color-mix(in srgb, var(--c) 55%, #050408) 100%) !important; box-shadow: 0 0 16px 3px var(--c); }
+/* jamais essayé : le néon est éteint, et s'allume par à-coups de temps en temps */
+@keyframes neon { 0%, 100% { filter: brightness(.1) saturate(.6); } 22% { filter: brightness(.1) saturate(.6); } 23% { filter: brightness(1.25); } 25% { filter: brightness(.12); } 27% { filter: brightness(1.15); } 31% { filter: brightness(.1) saturate(.6); }
+  63% { filter: brightness(.1) saturate(.6); } 64% { filter: brightness(1.3); } 66% { filter: brightness(.2); } 67% { filter: brightness(1.2); } 72% { filter: brightness(1.1); } 73% { filter: brightness(.1) saturate(.6); } 88% { filter: brightness(.1) saturate(.6); } 89% { filter: brightness(.9); } 90% { filter: brightness(.1) saturate(.6); } }
