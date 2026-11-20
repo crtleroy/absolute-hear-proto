@@ -68,5 +68,61 @@
   "source": "https://commons.wikimedia.org/wiki/File%3AChopin_-_12_%C3%89tudes%2C_Op._25_-_No._1_in_A-Flat_major_%27Harp_Study%27_%28Edward_Neeman%29.flac",
   "licence": "Public domain",
   "interprete": "Frédéric Chopin"
+ },
+ {
+  "titre": "Nocturne op. 55 n°2",
+  "audio": "audio/nocturne-op-55-n-2.mp3",
+  "source": "https://commons.wikimedia.org/wiki/File%3AChopin_-_Nocturne_No._16_in_E-flat_major%2C_Op._55_No._2_%28Xuan_He%29.flac",
+  "licence": "Public domain",
+  "interprete": "Frédéric Chopin"
+ },
+ {
+  "titre": "Mazurka op. 68 n°4",
+  "audio": "audio/mazurka-op-68-n-4.mp3",
+  "source": "https://commons.wikimedia.org/wiki/File%3AChopin_-_Mazurka_in_F_minor%2C_Op._68_no._4.ogg",
+  "licence": "CC BY 3.0",
+  "interprete": "Frédéric Chopin"
+ },
+ {
+  "titre": "Valse op. 64 n°2",
+  "audio": "audio/valse-op-64-n-2.mp3",
+  "source": "https://commons.wikimedia.org/wiki/File%3AChopin-waltz-op-64-no-2-in-c-sharp-minor.oga",
+  "licence": "CC0",
+  "interprete": "Frédéric Chopin"
+ },
+ {
+  "titre": "Valse op. 69 n°2",
+  "audio": "audio/valse-op-69-n-2.mp3",
+  "source": "https://commons.wikimedia.org/wiki/File%3AChopin_-_Waltz_No._10_in_B_minor%2C_Op._69_No._2_%28Olga_Gurevich%29.flac",
+  "licence": "Public domain",
+  "interprete": "Frédéric Chopin"
+ },
+ {
+  "titre": "Les sons et les parfums tournent dans l'air du soir",
+  "audio": "audio/les-sons-et-les-parfums-tournent-dans-l-air-du-soir.mp3",
+  "source": "https://commons.wikimedia.org/wiki/File%3AClaude_Debussy_-_Pr%C3%A9ludes_%28Livre_I%29_-_IV._Les_sons_et_les_parfums_tournent_dans_l%27air_du_soir_%28Marcelle_Meyer%2C_1956%29.flac",
+  "licence": "Public domain",
+  "interprete": "Claude Debussy"
+ },
+ {
+  "titre": "Étude op. 10 n°6",
+  "audio": "audio/etude-op-10-n-6.mp3",
+  "source": "https://commons.wikimedia.org/wiki/File%3AChopin_-_12_%C3%89tudes%2C_Op._10_-_No._6_in_E-Flat_minor_%27Lament%27_%28Edward_Neeman%29.flac",
+  "licence": "Public domain",
+  "interprete": "Frédéric Chopin"
+ },
+ {
+  "titre": "Mazurka op. 30 n°3",
+  "audio": "audio/mazurka-op-30-n-3.mp3",
+  "source": "https://commons.wikimedia.org/wiki/File%3AChopin_-_Mazurka_No._20_in_D-flat_major%2C_Op._30_No._3_%28Edward_Neeman%29.flac",
+  "licence": "Public domain",
+  "interprete": "Frédéric Chopin"
+ },
+ {
+  "titre": "Mazurka",
+  "audio": "audio/mazurka.mp3",
+  "source": "https://commons.wikimedia.org/wiki/File%3ADebussy_-_Mazurka.ogg",
+  "licence": "CC BY-SA 3.0",
+  "interprete": "Piano: User Pabix (Benoit Mortgat)"
  }
 ]
