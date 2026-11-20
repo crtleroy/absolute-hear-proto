@@ -440,3 +440,9 @@ p { margin: 0; }
 .fin.bilan .score-fin b { font-size: 6rem; }
 .fin-vies { justify-content: center; font-size: 1.5rem; gap: 8px; margin-top: 4px; }
 .fin.bilan .grand { margin-top: 0; }
+
+/* ================= le piano de verre en 3D ================= */
+.grand-clavier.trois-d { aspect-ratio: auto; height: 230px; margin: 4px -22px -6px; background: none; display: block; }
+.grand-clavier.trois-d canvas { display: block; width: 100%; height: 100%; }
+.grand-clavier.trois-d { height: 250px; }
+.grand-clavier.trois-d canvas { mix-blend-mode: screen; } /* le noir du rendu laisse voir l'écran : seule la lumière s'ajoute */

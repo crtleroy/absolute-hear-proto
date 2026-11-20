@@ -408,7 +408,10 @@
   }
   function rendreClavierAccueil() {
     const niv = niveauxTouches(), valeurs = Object.values(niv);
-    grandClavier($("acc-clavier"), niv, niveauxVus, null);
+    // le piano de verre en 3D quand c'est possible, sinon le clavier dessiné
+    const zone = $("acc-clavier");
+    if (window.Piano3D && window.Piano3D.maj(zone, niv, niveauxVus, COULEURS)) zone.classList.add("trois-d");
+    else { zone.classList.remove("trois-d"); grandClavier(zone, niv, niveauxVus, null); }
     niveauxVus = niv;
     $("acc-jauge").textContent = Math.round((100 * valeurs.reduce((a, n) => a + n, 0)) / (88 * 5));
     $("acc-touches").innerHTML = `<b>${valeurs.length}</b> / 88 touches`;
