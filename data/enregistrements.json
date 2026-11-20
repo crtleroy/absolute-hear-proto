@@ -14,13 +14,6 @@
   "interprete": "Robin Alciatore"
  },
  {
-  "titre": "Fantaisie-Impromptu",
-  "audio": "audio/fantaisie-impromptu.mp3",
-  "source": "https://commons.wikimedia.org/wiki/File%3AFantaisie_Impromptu_Op._66.mp3",
-  "licence": "CC0",
-  "interprete": "Frederic Chopin"
- },
- {
   "titre": "Prélude op. 28 n°4",
   "audio": "audio/prelude-op-28-n-4.mp3",
   "source": "https://commons.wikimedia.org/wiki/File%3AIvan_Ili%C4%87-Chopin_Prelude_Opus_28_n.4.ogg",
@@ -28,32 +21,11 @@
   "interprete": ""
  },
  {
-  "titre": "Prélude op. 3 n°2",
-  "audio": "audio/prelude-op-3-n-2.mp3",
-  "source": "https://commons.wikimedia.org/wiki/File%3ASergei_Rachmaninoff_performs_Rachmaninoff%27s_Prelude_in_C_sharp_minor%2C_Op._3.ogg",
-  "licence": "Public domain",
-  "interprete": "Sergei Rachmaninoff"
- },
- {
   "titre": "Rêverie (Träumerei)",
   "audio": "audio/reverie-traumerei.mp3",
   "source": "https://commons.wikimedia.org/wiki/File%3ARobert_Schumann_-_scenes_from_childhood%2C_op._15_-_vii._dreaming.ogg",
   "licence": "Public domain",
   "interprete": "Robert Schumann (1810-1856) (see Musopen for performance author information)"
- },
- {
-  "titre": "Ballade n°1",
-  "audio": "audio/ballade-n-1.mp3",
-  "source": "https://commons.wikimedia.org/wiki/File%3AFrederic_Chopin_-_ballade_no._1_in_g_minor%2C_op._23.ogg",
-  "licence": "Public domain",
-  "interprete": "Frédéric Chopin"
- },
- {
-  "titre": "Polonaise « héroïque »",
-  "audio": "audio/polonaise-hero-que.mp3",
-  "source": "https://commons.wikimedia.org/wiki/File%3ALatsabidze_plays_Polonaise_in_A_flat%2C_Op._53.ogg",
-  "licence": "Public domain",
-  "interprete": "Frédéric Chopin"
  },
  {
   "titre": "Étude op. 10 n°3 « Tristesse »",
@@ -89,13 +61,6 @@
   "source": "https://commons.wikimedia.org/wiki/File%3AGymnop%C3%A9die_no.3.ogg",
   "licence": "CC0",
   "interprete": "Teknopazzo"
- },
- {
-  "titre": "Impromptu op. 90 n°1",
-  "audio": "audio/impromptu-op-90-n-1.mp3",
-  "source": "https://commons.wikimedia.org/wiki/File%3ASchubert%27s_Impromptu_no._1_in_C_minor%2C_D.899_-_Chiara_Bertoglio.ogg",
-  "licence": "CC BY 3.0",
-  "interprete": "Chiara Bertoglio"
  },
  {
   "titre": "Ballade n°3",
