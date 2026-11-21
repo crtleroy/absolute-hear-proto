@@ -709,3 +709,8 @@ p { margin: 0; }
   .f-octave { height: 86px; }
   .f-contenu > .rond { width: 40px; height: 40px; margin-bottom: 10px; }
 }
+
+/* ================= la police des boutons d'action : Sora =================
+   Fraunces pour les titres, Inter pour les textes, Sora pour ce qu'on touche pour agir (Jouer, Continuer…). */
+:root { --action: "Sora", "Inter", system-ui, sans-serif; }
+.bouton { font-family: var(--action); font-weight: 600; }
