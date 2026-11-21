@@ -158,10 +158,14 @@
     }
     return fin;
   }
+  /* Met un enregistrement dans le lecteur sans le jouer. Appelé dès que la question est posée, pour que la musique parte à l'instant du clic. */
+  function chargerSon(src) {
+    if (son.dataset.src !== src) { son.dataset.src = src; son.src = src; son.load(); }
+  }
   async function jouerEnregistrement(p, mode) {
     arreter();
-    son.src = ENR[p.titre].audio;
-    son.currentTime = 0;
+    chargerSon(ENR[p.titre].audio);
+    if (son.currentTime) son.currentTime = 0;
     son.volume = 1;
     Object.assign(lecteur, { piece: p, mode, source: "audio", duree: 0, joue: true, pause: false });
     majLecture();
@@ -750,7 +754,7 @@
     if (!son.dataset.ouvert && PIECES.some((p) => ENR[p.titre])) {
       son.dataset.ouvert = "1";
       son.muted = true;
-      son.src = ENR[PIECES.find((p) => ENR[p.titre]).titre].audio;
+      chargerSon(ENR[PIECES.find((p) => ENR[p.titre]).titre].audio);
       son.play().then(() => { son.pause(); son.muted = false; }).catch(() => { son.muted = false; });
     }
     try { await pretAudio(); } catch (e) { return; }
@@ -831,6 +835,9 @@
     rendreReponses();
     majEnjeu();
     sonner();
+    // on prépare tout de suite ce que la bonne réponse déclenchera : l'enregistrement et la partition
+    if (ENR[p.titre]) chargerSon(ENR[p.titre].audio);
+    chargerPartition(p.id).catch(() => {});
   }
   /* autres morceaux pour les mauvaises réponses : d'abord ceux de la liste, puis les suivants du catalogue */
   function leurres(p, n) {
@@ -929,10 +936,10 @@
   function repondreNote(choix, el) {
     if (q.fini) return;
     const p = q.p, juste = choix === pc(p), pts = valeur();
+    // bonne note : la musique part avant tout le reste, c'est son début qu'on entend sous le doigt
+    if (juste) apercu(p).catch(() => {}); else arreter();
     // on entend la note qu'on vient de choisir, à l'octave la plus proche de la vraie
     const midi = p.midis[0] + ((choix - pc(p) + 18) % 12) - 6;
-    arreter();
-    // bonne note : on ne la rejoue pas, la musique part aussitôt et c'est son début qu'on entend
     if (!juste && piano) piano.triggerAttackRelease(Tone.Frequency(midi, "midi").toFrequency(), 1.3, undefined, 0.8);
     const zone = $("reponses");
     zone.style.setProperty("--c", couleur(p));
@@ -943,12 +950,12 @@
       zone.querySelectorAll(`[data-pc="${pc(p)}"]`).forEach((t) => t.classList.add("cible"));
       if (!juste) el.classList.add("erreur");
     }
-    if (q.T === DERNIER) { q.gain = juste ? pts : 0; return conclure(juste, juste ? 0 : 250); }
+    if (q.T === DERNIER) { q.gain = juste ? pts : 0; return conclure(juste, juste ? 420 : 250, juste); }
     q.bonus = juste ? pts : 0;
     q.noteJuste = juste;
-    conclure(true, juste ? 0 : 250);
+    conclure(true, juste ? 420 : 250, juste);
   }
-  function conclure(juste, delai = 250) { // delai : attente avant la fiche de résultat
+  function conclure(juste, delai = 250, lancee = false) { // delai : attente avant la fiche de résultat ; lancee : la musique joue déjà
     q.fini = true;
     majEnjeu();
     const p = q.p, avant = q.T, seule = q.T === DERNIER;
@@ -969,7 +976,7 @@
     document.dispatchEvent(new CustomEvent("ah:reponse", { detail: { juste, palier: avant, temps: (performance.now() - q.debut) / 1000 } }));
     const parts = !juste ? [] : seule ? [] : [{ txt: `morceau +${q.gain}` }, q.noteJuste ? { txt: `note +${q.bonus}` } : { txt: "note", non: true }];
     const resultat = { juste, gain, parts, avant, apres, acquis: juste && seule };
-    const reveler = () => { apercu(p).catch(() => {}); ouvrirFiche(p, resultat, suivante); };
+    const reveler = () => { if (!lancee) apercu(p).catch(() => {}); ouvrirFiche(p, resultat, suivante); };
     if (delai) setTimeout(reveler, delai); else reveler();
   }
   /* Entre deux morceaux : fondu, silence, puis la note suivante. */
