@@ -34,18 +34,18 @@ article a { display: block; margin: 10px 18px 0; color: var(--or); font-size: .9
 <body>
 <main>
   <h1>Le bouton Jouer</h1>
-  <p class="intro">Six marbrures, posées sur le bas de l'écran d'accueil. Le lien sous chacune l'ouvre dans la vraie appli.</p>
+  <p class="intro">Six tirs à partir de l'Encre, en plus diffus, posés sur le bas de l'écran d'accueil. Le lien sous chacune l'ouvre dans la vraie appli.</p>
   <div id="pistes"></div>
 </main>
-<script src="marbre.js?v=55"></script>
+<script src="marbre.js?v=57"></script>
 <script>
 const TEXTES = [
-  "Veines arc-en-ciel sur fond sombre, sans contour, mot crème.",
-  "Les mêmes veines, avec un filet doré autour et le mot en or.",
-  "Aplats de couleur sombres, séparés par des filets dorés, sans contour.",
-  "Bouton doré, veines sombres, une sur trois en couleur, mot sombre.",
-  "Le centre reste sombre et calme, les veines vivent sur les bords.",
-  "Les aplats du Bain, dans une forme de galet.",
+  "Les veines de l'Encre, floutées. Sans contour. Mot en Inter demi-gras.",
+  "Plus de lignes du tout : seulement des couleurs qui bougent. Mot en capitales espacées.",
+  "L'Encre diffuse avec un filet doré autour.",
+  "Le centre reste sombre, les couleurs vivent sur les bords. Mot en capitales espacées.",
+  "Le Bord vif diffus avec un filet doré autour.",
+  "L'Encre diffuse, avec le triangle de lecture devant le mot.",
 ];
 const zone = document.getElementById("pistes");
 MARBRES.forEach((v, i) => {
