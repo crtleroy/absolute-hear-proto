@@ -660,3 +660,7 @@ p { margin: 0; }
 .eclat-depart { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 55; pointer-events: none; }
 @media (prefers-reduced-motion: reduce) { .fond-partitions .pf { animation: none; } }
 .fond-partitions text { display: none; }
+
+/* ================= victoire : score clair et net, la couleur reste aux ondes ================= */
+.fin.bilan.reussie .score-fin b { background: none; -webkit-background-clip: border-box; background-clip: border-box; color: #fff7e6; filter: none; text-shadow: 0 0 10px #0f0e14, 0 2px 24px #0f0e14, 0 0 40px #0f0e14; }
+.fin.bilan.reussie .score-fin small { color: #d9d3e3; }

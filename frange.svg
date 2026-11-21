@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <title>First Note — la frange</title>
+  <defs><clipPath id="coins"><rect width="512" height="512" rx="79"/></clipPath></defs>
+  <g clip-path="url(#coins)"><rect x="0.00" y="0" width="47.15" height="512" fill="#f04cf0"/><rect x="46.55" y="0" width="47.15" height="512" fill="#4c9ef0"/><rect x="93.09" y="0" width="47.15" height="512" fill="#f04c9e"/><rect x="139.64" y="0" width="47.15" height="512" fill="#f04c4c"/><rect x="186.18" y="0" width="47.15" height="512" fill="#f09e4c"/><rect x="232.73" y="0" width="47.15" height="512" fill="#4cf04c"/><rect x="279.27" y="0" width="47.15" height="512" fill="#4c4cf0"/><rect x="325.82" y="0" width="47.15" height="512" fill="#4cf0f0"/><rect x="372.36" y="0" width="47.15" height="512" fill="#9ef04c"/><rect x="418.91" y="0" width="47.15" height="512" fill="#f09e4c"/><rect x="465.45" y="0" width="47.15" height="512" fill="#4cf09e"/></g>
+</svg>

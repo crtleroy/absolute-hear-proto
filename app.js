@@ -296,11 +296,13 @@
     const connu = (p) => (S.acquis[p.id] ? 100 : !(S.essaye[p.id] || S.palier[p.id] > 0) ? -1 : palier(p) * 3 + niveauNote(p));
     return liste.map((p, i) => [p, i]).sort((x, y) => connu(x[0]) - connu(y[0]) || x[1] - y[1]).map((x) => x[0]);
   }
+  /* La frange : onze bandes aux couleurs des onze premiers morceaux. Motif figé, repris dans la charte (logos/frange.svg). */
+  const FRANGE = [10, 7, 11, 0, 1, 4, 8, 6, 3, 1, 5];
   function rendreListe() {
     const liste = listeTriee();
     const enLecture = lecteur.mode === "ecoute" && lecteur.joue;
     $("pl-resume").textContent = `${liste.length} morceau${liste.length > 1 ? "x" : ""}`;
-    $("pl-pochette").innerHTML = maListe().map((p) => `<i style="background:${couleur(p)}"></i>`).join("");
+    $("pl-pochette").innerHTML = FRANGE.map((n) => `<i style="background:${COULEURS[n]}"></i>`).join("");
     $("pl-lire").innerHTML = enLecture && !lecteur.pause ? ICONE.pause : ICONE.lire;
     $("pl-tri").innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M7 12h10M10 17h4"/></svg>${S.tri === "ordre" ? "Ordre de découverte" : "Moins connus d'abord"}`;
     const zone = $("pl-liste");
@@ -589,10 +591,10 @@
       const med = centre.getBoundingClientRect(), cadre = toile.getBoundingClientRect();
       const cx = med.left + med.width / 2 - cadre.left, cy = med.top + med.height / 2 - cadre.top;
       const t = (maintenant - t0) / 1000, tc = (maintenant - choc) / 1000;
-      const R = Math.hypot(L, H) * 0.62, r0 = Math.min(med.width, med.height) / 2;
-      const lueur = ctx.createRadialGradient(cx, cy, r0, cx, cy, R * 0.8);
       const arc = teinteNote === "arc"; // mode arc-en-ciel : chaque onde prend la couleur d'une note
-      const fondu = arc ? COULEURS[Math.floor(t * 0.7) % 12] : teinteNote;
+      const R = Math.hypot(L, H) * 0.62, r0 = arc ? centre.offsetHeight * 1.25 : Math.min(med.width, med.height) / 2; // en arc-en-ciel, les ondes naissent autour du score, jamais dessus
+      const lueur = ctx.createRadialGradient(cx, cy, r0, cx, cy, R * 0.8);
+      const fondu = arc ? "#2c2840" : teinteNote; // fond sombre et stable : le contraste du score ne varie pas
       lueur.addColorStop(0, melanger(fondu, "#16141d", 0.45));
       lueur.addColorStop(1, "rgba(22,20,29,0)");
       ctx.globalCompositeOperation = "source-over";
@@ -621,6 +623,16 @@
       };
       anneaux(34, 0.045, 3, 0, arc ? "" : melanger(teinteNote, "#ffffff", 0.75)); // tout l'écran est à la couleur de la note
       anneaux(26, -0.03, 5, 2.1, arc ? "" : melanger(teinteNote, "#ffffff", 0.3));
+      if (arc) { // puits sombre derrière le score
+        const puits = ctx.createRadialGradient(cx, cy, r0 * 0.55, cx, cy, r0 * 1.35);
+        puits.addColorStop(0, "rgba(15,14,20,.92)");
+        puits.addColorStop(1, "rgba(15,14,20,0)");
+        ctx.globalCompositeOperation = "source-over";
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = puits;
+        ctx.fillRect(0, 0, L, H);
+        ctx.globalCompositeOperation = "lighter";
+      }
       if (tc > 0 && tc < 1.6) { // onde de choc
         const k = 1 - Math.pow(1 - tc / 1.6, 3);
         for (let j = 0; j < 4; j++) {
@@ -631,7 +643,7 @@
           ctx.lineWidth = (10 - j * 2) * (1 - k) + 0.6;
           ctx.stroke();
         }
-        ctx.globalAlpha = Math.max(0, 0.5 - tc * 1.4);
+        ctx.globalAlpha = Math.max(0, (arc ? 0.18 : 0.5) - tc * 1.4);
         ctx.fillStyle = "#fffaf0";
         ctx.fillRect(0, 0, L, H);
       }
