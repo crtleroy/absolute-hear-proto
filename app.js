@@ -161,6 +161,23 @@
   /* Met un enregistrement dans le lecteur sans le jouer. Appelé dès que la question est posée, pour que la musique parte à l'instant du clic. */
   function chargerSon(src) {
     if (son.dataset.src !== src) { son.dataset.src = src; son.src = src; son.load(); }
+    else if (son.currentTime) { try { son.currentTime = 0; } catch (e) { /* pas encore prêt */ } } // déjà chargé : on le rembobine d'avance, pas au moment du clic
+  }
+  /* Filet de sécurité : si l'enregistrement n'a pas démarré (fichier mal gardé en mémoire par le téléphone, retour au début
+     qui cale…), on le recharge depuis le réseau ; s'il ne part toujours pas, le piano joue la partition à sa place. */
+  let tentative = 0;
+  function veiller(p, mode, jeton, essai) {
+    setTimeout(() => {
+      if (jeton !== tentative || lecteur.piece !== p || !lecteur.joue || lecteur.pause || lecteur.source !== "audio") return;
+      if (!son.paused && son.currentTime > 0.05) return; // la musique joue
+      if (!essai) {
+        const src = ENR[p.titre].audio + "?r=" + Date.now();
+        son.dataset.src = src; son.src = src; son.load();
+        son.play().catch(() => {});
+        veiller(p, mode, jeton, 1);
+      } else if (mode === "extrait") extrait(p, nbAttaquesMesures(p, 4)).catch(() => {});
+      else jouerSynthese(p, "ecoute", Infinity, false, INTRO).catch(() => {});
+    }, essai ? 2500 : 900);
   }
   async function jouerEnregistrement(p, mode) {
     arreter();
@@ -169,7 +186,9 @@
     son.volume = 1;
     Object.assign(lecteur, { piece: p, mode, source: "audio", duree: 0, joue: true, pause: false });
     majLecture();
-    try { await son.play(); } catch (e) { lecteur.joue = false; majLecture(); }
+    const jeton = ++tentative;
+    veiller(p, mode, jeton, 0);
+    try { await son.play(); } catch (e) { /* veiller() prend le relais */ }
   }
   async function jouerSynthese(p, mode, nb, tenir, intro) {
     await pretAudio();
