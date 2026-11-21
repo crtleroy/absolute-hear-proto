@@ -34,18 +34,18 @@ article a { display: block; margin: 10px 18px 0; color: var(--or); font-size: .9
 <body>
 <main>
   <h1>Le bouton Jouer</h1>
-  <p class="intro">Six tirs à partir de l'Encre, en plus diffus, posés sur le bas de l'écran d'accueil. Le lien sous chacune l'ouvre dans la vraie appli.</p>
+  <p class="intro">Six tirs aux lignes nettes, mot dans les tons dorés, posés sur le bas de l'écran d'accueil. Le lien sous chacune l'ouvre dans la vraie appli.</p>
   <div id="pistes"></div>
 </main>
-<script src="marbre.js?v=57"></script>
+<script src="marbre.js?v=58"></script>
 <script>
 const TEXTES = [
-  "Les veines de l'Encre, floutées. Sans contour. Mot en Inter demi-gras.",
-  "Plus de lignes du tout : seulement des couleurs qui bougent. Mot en capitales espacées.",
-  "L'Encre diffuse avec un filet doré autour.",
-  "Le centre reste sombre, les couleurs vivent sur les bords. Mot en capitales espacées.",
-  "Le Bord vif diffus avec un filet doré autour.",
-  "L'Encre diffuse, avec le triangle de lecture devant le mot.",
+  "Les lignes nettes de la première Encre. Mot en Inter, crème.",
+  "La même, avec le mot en dégradé crème vers or, comme les chiffres de l'accueil.",
+  "Un cran entre les deux séries : lignes à peine plus larges et légèrement adoucies.",
+  "Lignes nettes, filet doré autour, mot doré en capitales espacées.",
+  "Le centre reste sombre, les lignes vivent sur les bords. Mot doré.",
+  "Le Bord vif avec un filet doré, mot crème en capitales espacées.",
 ];
 const zone = document.getElementById("pistes");
 MARBRES.forEach((v, i) => {

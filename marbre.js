@@ -2,15 +2,15 @@
    window.marbrer(bouton, numéro de variante) habille un bouton. Sert à la page d'essai (boutons.html) et,
    avec ?bouton=N dans l'adresse, au bouton Jouer de l'appli pour juger chaque variante en situation. */
 (function () {
-  /* Deuxième série : l'Encre retenue, en plus diffus. flou = flou de la toile (px), large = demi-largeur d'une veine (px),
-     mot = "phrase" (Inter demi-gras) ou "capitales" (Inter, capitales espacées, comme les étiquettes de l'appli). */
+  /* Troisième série : retour aux lignes nettes de la première Encre, mot en Inter dans les tons dorés.
+     large = demi-largeur d'une veine (px), flou = flou de la toile (px), mot = "phrase" ou "capitales", ton = "creme" ou "or". */
   const VARIANTES = [
-    { nom: "Encre diffuse", flou: 5, large: 5, force: 1, mot: "phrase" },
-    { nom: "Encre très diffuse", flou: 12, large: 10, force: 1, k: 0.85, mot: "capitales" },
-    { nom: "Encre diffuse et filet", flou: 5, large: 5, force: 1, mot: "phrase", filet: true },
-    { nom: "Bord vif diffus", flou: 6, large: 6, force: 1, mot: "capitales", centre: true },
-    { nom: "Bord vif diffus et filet", flou: 6, large: 6, force: 1, mot: "phrase", centre: true, filet: true },
-    { nom: "Encre diffuse, avec le signe lecture", flou: 8, large: 7, force: 1, k: 1.2, mot: "phrase", signe: true },
+    { nom: "Encre nette", large: 2.1, flou: 0, mot: "phrase", ton: "creme" },
+    { nom: "Encre nette, mot doré", large: 2.1, flou: 0, mot: "phrase", ton: "or" },
+    { nom: "Encre adoucie", large: 3.2, flou: 1.1, mot: "phrase", ton: "creme" },
+    { nom: "Encre et filet", large: 2.1, flou: 0, mot: "capitales", ton: "or", filet: true },
+    { nom: "Bord vif", large: 2.1, flou: 0, mot: "phrase", ton: "or", centre: true },
+    { nom: "Bord vif et filet", large: 2.1, flou: 0, mot: "capitales", ton: "creme", centre: true, filet: true },
   ];
   // les douze couleurs des notes, comme dans l'appli (do = rouge)
   const COUL = Array.from({ length: 12 }, (_, i) => {
@@ -21,13 +21,14 @@
   const style = document.createElement("style");
   style.textContent = `
 .marbre { position: relative; isolation: isolate; overflow: hidden; border: 0 !important; background: #191622 !important; box-shadow: 0 14px 34px rgba(0, 0, 0, .55), 0 0 0 1px rgba(255, 255, 255, .06); }
-.marbre canvas { position: absolute; inset: -16px; width: calc(100% + 32px); height: calc(100% + 32px); z-index: -1; pointer-events: none; }
-.marbre .mot { position: relative; display: inline-flex; align-items: center; gap: 12px; font-family: "Inter", system-ui, sans-serif; line-height: 1; color: #fffaf0; text-shadow: 0 0 8px rgba(15, 14, 20, .95), 0 0 20px rgba(15, 14, 20, .9), 0 1px 2px rgba(0, 0, 0, .9); }
-.marbre .mot.phrase { font-weight: 600; font-size: 1.45rem; letter-spacing: .005em; }
-.marbre .mot.capitales { font-weight: 600; font-size: 1.08rem; letter-spacing: .24em; text-transform: uppercase; padding-left: .24em; }
-.marbre .mot svg { width: .95em; height: .95em; filter: drop-shadow(0 0 6px rgba(15, 14, 20, .9)); }
+.marbre canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; border-radius: inherit; pointer-events: none; }
+.marbre .mot { position: relative; font-family: "Inter", system-ui, sans-serif; font-weight: 600; line-height: 1.2; }
+.marbre .mot.phrase { font-size: 1.5rem; letter-spacing: .005em; }
+.marbre .mot.capitales { font-size: 1.1rem; letter-spacing: .24em; text-transform: uppercase; padding-left: .24em; }
+.marbre .mot.creme { color: #fff3d6; text-shadow: 0 0 8px #0f0e14, 0 0 18px #0f0e14, 0 1px 2px rgba(0, 0, 0, .9); }
+.marbre .mot.or { background: linear-gradient(180deg, #fff3d6 15%, #e9c27a 85%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 5px #0f0e14) drop-shadow(0 0 12px #0f0e14); }
 .marbre.filet::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1.5px rgba(233, 194, 122, .8); pointer-events: none; }
-.essai-bouton { display: block; margin: 12px auto 0; padding: 4px 12px; color: #a7a1b2; font-size: .78rem; letter-spacing: .04em; text-align: center; }
+.essai-bouton { display: block; padding: 4px 12px; color: #a7a1b2; font-size: .78rem; letter-spacing: .04em; text-align: center; }
 .essai-bouton b { color: #e9c27a; font-weight: 600; }
 `;
   document.head.appendChild(style);
@@ -37,18 +38,17 @@
   function marbrer(bouton, numero) {
     const v = VARIANTES[(numero - 1 + VARIANTES.length) % VARIANTES.length];
     if (bouton.__marbre) bouton.__marbre();
-    bouton.classList.remove("plein", "filet");
+    bouton.classList.remove("plein");
     bouton.classList.add("marbre");
-    if (v.filet) bouton.classList.add("filet");
+    bouton.classList.toggle("filet", !!v.filet);
     const mot = bouton.textContent.trim() || "Jouer";
-    const signe = v.signe ? '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>' : "";
-    bouton.innerHTML = `<canvas aria-hidden="true"></canvas><span class="mot ${v.mot}">${signe}${mot}</span>`;
+    bouton.innerHTML = `<canvas aria-hidden="true"></canvas><span class="mot ${v.mot} ${v.ton}">${mot}</span>`;
     const toile = bouton.firstChild, ctx = toile.getContext("2d");
-    toile.style.filter = `blur(${v.flou}px)`;
+    toile.style.filter = v.flou ? `blur(${v.flou}px)` : "";
     const phase = Math.random() * 100;
     let L = 0, H = 0, img = null, haut = null, vivant = true, dernier = 0;
     function taille() {
-      const l = Math.max(2, Math.round(toile.clientWidth / 2)), h = Math.max(2, Math.round(toile.clientHeight / 2)); // demi-définition : le flou la rend invisible
+      const l = Math.max(2, Math.round(bouton.clientWidth)), h = Math.max(2, Math.round(bouton.clientHeight));
       if (l === L && h === H) return;
       L = l; H = h; toile.width = L; toile.height = H;
       img = ctx.createImageData(L, H);
@@ -60,8 +60,7 @@
       if (maintenant - dernier < 33 || !bouton.offsetParent) return; // 30 images par seconde, rien si le bouton est caché
       dernier = maintenant;
       taille();
-      const t = maintenant / 1000 + phase, d = img.data, E = 1 / 29; // 29 points de toile (58 px à l'écran) = une unité du champ
-      const K = v.k || 1.7, large = v.large / 2; // K : nombre de veines ; moins il y en a, moins les couleurs se mélangent en gris sous le flou
+      const t = maintenant / 1000 + phase, d = img.data, E = 1 / 58, K = 1.7; // 58 px = une unité du champ
       for (let y = 0, i = 0; y < H; y++) {
         let gauche = 0;
         for (let x = 0; x < L; x++, i += 4) {
@@ -79,12 +78,11 @@
           // et plus de veines là où elles se serreraient en moiré
           const pente = Math.max(0.004, Math.hypot(x ? b - gauche : 0, y ? b - haut[x] : 0));
           gauche = b; haut[x] = b;
-          let trait = (1 - lisse(0, large, Math.abs(b - bord) / pente)) * (1 - lisse(0.3, 0.6, pente)) * v.force;
+          let trait = (1 - lisse(v.large * 0.38, v.large, Math.abs(b - bord) / pente)) * (1 - lisse(0.16, 0.34, pente));
           const dx = (x / L - 0.5) * 2, dy = (y / H - 0.5) * 2, ell = Math.sqrt(dx * dx * 1.6 + dy * dy * 0.8); // 0 au centre du bouton
-          trait *= v.centre ? lisse(0.3, 0.95, ell) : 0.55 + 0.45 * lisse(0.15, 0.8, ell); // le mot reste lisible au centre
+          trait *= v.centre ? lisse(0.3, 0.95, ell) : 0.42 + 0.58 * lisse(0.12, 0.8, ell); // le mot reste lisible au centre
           const c = COUL[(bord * 5) % 12];
-          const r = 25 + (c[0] - 25) * trait, g = 22 + (c[1] - 22) * trait, bl = 34 + (c[2] - 34) * trait;
-          d[i] = r; d[i + 1] = g; d[i + 2] = bl; d[i + 3] = 255;
+          d[i] = 25 + (c[0] - 25) * trait; d[i + 1] = 22 + (c[1] - 22) * trait; d[i + 2] = 34 + (c[2] - 34) * trait; d[i + 3] = 255;
         }
       }
       ctx.putImageData(img, 0, 0);
