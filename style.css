@@ -683,3 +683,29 @@ p { margin: 0; }
 .f-contenu .bouton.pouce { background: var(--c, var(--or)); color: #14121a; }
 .f-contenu > .rond { flex: none; width: 46px; height: 46px; margin: -6px 0 14px; background: rgba(255, 255, 255, .12); color: #fff; }
 .grand-clavier.fiche { margin-bottom: 14px; }
+
+/* ================= le bouton principal au milieu de la zone du pouce, et le clavier jouable de la fiche ================= */
+.bouton.pouce { margin-bottom: calc((var(--zone) - var(--pouce)) / 2); }
+.accueil .bouton.pouce { margin-top: calc((var(--zone) - var(--pouce)) / 2); }
+.f-octave { flex: none; align-self: stretch; height: 118px; margin: 0 -4px 14px; }
+.f-octave .octave .blanche { padding-bottom: 6px; font-size: .72rem; }
+.octave .jouee { animation: touche .4s ease-out; }
+@keyframes touche { from { filter: brightness(1.6); transform: translateY(3px); } }
+.f-resultat { margin-bottom: 12px; }
+.f-comp { margin-bottom: 12px; }
+@media (max-height: 800px) {
+  .feuille-panneau .medaillon.moyen { width: 92px; height: 92px; font-size: 2rem; }
+  .f-points { font-size: 3.2rem; }
+  .f-detail { margin: 4px 0 8px; }
+  .f-octave { height: 100px; }
+}
+.feuille-panneau .medaillon.moyen { flex: none; }
+@media (max-height: 700px) {
+  .f-contenu { padding-top: 10px; }
+  .feuille-panneau .medaillon.moyen { width: 76px; height: 76px; font-size: 1.7rem; }
+  .f-points { font-size: 2.6rem; }
+  .feuille-panneau .fin-touche { margin-top: 8px; }
+  .feuille-panneau h2 { font-size: 1.5rem; }
+  .f-octave { height: 86px; }
+  .f-contenu > .rond { width: 40px; height: 40px; margin-bottom: 10px; }
+}

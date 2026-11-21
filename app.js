@@ -365,13 +365,26 @@
     $("f-note").textContent = noteExacte(p);
     $("f-titre").textContent = p.titre;
     $("f-comp").textContent = p.compositeur;
-    grandClavier($("f-clavier"), niveauxTouches(), p.midis);
+    const zc = $("f-clavier"); // le clavier reste jouable : on peut vérifier la note, ou rejouer celle qu'on avait choisie
+    zc.innerHTML = "";
+    clavierOctave(zc, (n, t) => jouerTouche(p, n, t));
+    zc.querySelectorAll(`[data-pc="${pc(p)}"]`).forEach((t) => t.classList.add("cible"));
+    if (resultat && resultat.choix != null) zc.querySelectorAll(`[data-pc="${resultat.choix}"]`).forEach((t) => t.classList.add("erreur"));
     const e = ENR[p.titre];
     $("f-credit").textContent = resultat ? "" : e ? `Enregistrement : ${e.interprete || "interprète non précisé"} · ${e.licence}` : "Écoute en rendu synthétique";
     $("f-suite").textContent = suite ? "Continuer" : "Fermer";
     $("feuille").hidden = false;
     majFiche();
     afficherPartition(p, $("f-partition"));
+  }
+  /* Une touche du clavier de la fiche : la musique se tait, et on entend la note, à l'octave la plus proche de la vraie. */
+  function jouerTouche(p, n, t) {
+    if (lecteur.joue && !lecteur.pause) { arreter(); majLecture(); }
+    const midi = p.midis[0] + ((n - pc(p) + 18) % 12) - 6;
+    pretAudio().then(() => { reveiller(); piano.triggerAttackRelease(Tone.Frequency(midi, "midi").toFrequency(), 1.3, undefined, 0.8); }).catch(() => {});
+    t.classList.remove("jouee");
+    void t.offsetWidth;
+    t.classList.add("jouee");
   }
   /* Le total de points défile de 0 à sa valeur. */
   function compter(el, total, prefixe = "+", duree = 700, attente = 0) {
@@ -940,6 +953,7 @@
     if (juste) apercu(p).catch(() => {}); else arreter();
     // on entend la note qu'on vient de choisir, à l'octave la plus proche de la vraie
     const midi = p.midis[0] + ((choix - pc(p) + 18) % 12) - 6;
+    if (!juste) q.choix = choix;
     if (!juste && piano) piano.triggerAttackRelease(Tone.Frequency(midi, "midi").toFrequency(), 1.3, undefined, 0.8);
     const zone = $("reponses");
     zone.style.setProperty("--c", couleur(p));
@@ -975,7 +989,7 @@
     $("enjeu").innerHTML = juste ? `<b>+${gain}</b>` : "";
     document.dispatchEvent(new CustomEvent("ah:reponse", { detail: { juste, palier: avant, temps: (performance.now() - q.debut) / 1000 } }));
     const parts = !juste ? [] : seule ? [] : [{ txt: `morceau +${q.gain}` }, q.noteJuste ? { txt: `note +${q.bonus}` } : { txt: "note", non: true }];
-    const resultat = { juste, gain, parts, avant, apres, acquis: juste && seule };
+    const resultat = { juste, gain, parts, avant, apres, acquis: juste && seule, choix: q.choix };
     const reveler = () => { if (!lancee) apercu(p).catch(() => {}); ouvrirFiche(p, resultat, suivante); };
     if (delai) setTimeout(reveler, delai); else reveler();
   }
