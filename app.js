@@ -159,8 +159,31 @@
     return fin;
   }
   /* Met un enregistrement dans le lecteur sans le jouer. Appelé dès que la question est posée, pour que la musique parte à l'instant du clic. */
+  /* Les téléphones ne chargent pas un son tant qu'on ne le joue pas : au clic, il fallait encore aller le chercher sur le réseau,
+     et la musique partait en retard ou pas du tout. On télécharge donc d'avance, en entier, les morceaux qui arrivent dans la
+     partie ; le lecteur les lit ensuite depuis la mémoire, sans réseau. */
+  const tampon = new Map(); // adresse du fichier -> { url : adresse en mémoire, une fois téléchargé }
+  function precharger(src) {
+    if (tampon.has(src)) return;
+    const e = { url: null };
+    tampon.set(src, e);
+    fetch(src).then((r) => (r.ok ? r.blob() : Promise.reject(new Error(r.status)))).then((b) => {
+      if (tampon.get(src) !== e) return;
+      e.url = URL.createObjectURL(b);
+      // le lecteur attendait déjà ce morceau par le réseau : on le bascule sur la copie en mémoire tant qu'il ne joue pas
+      if (son.dataset.src === src && son.paused && !(lecteur.joue && lecteur.source === "audio")) chargerSon(src);
+    }).catch(() => { if (tampon.get(src) === e) tampon.delete(src); });
+  }
+  function liberer(garder) {
+    for (const [src, e] of tampon) {
+      if (garder.includes(src) || son.dataset.src === src) continue;
+      if (e.url) URL.revokeObjectURL(e.url);
+      tampon.delete(src);
+    }
+  }
   function chargerSon(src) {
-    if (son.dataset.src !== src) { son.dataset.src = src; son.src = src; son.load(); }
+    const e = tampon.get(src), reel = (e && e.url) || src;
+    if (son.dataset.src !== src || son.dataset.reel !== reel) { son.dataset.src = src; son.dataset.reel = reel; son.src = reel; son.load(); }
     else if (son.currentTime) { try { son.currentTime = 0; } catch (e) { /* pas encore prêt */ } } // déjà chargé : on le rembobine d'avance, pas au moment du clic
   }
   /* Filet de sécurité : si l'enregistrement n'a pas démarré (fichier mal gardé en mémoire par le téléphone, retour au début
@@ -172,7 +195,7 @@
       if (!son.paused && son.currentTime > 0.05) return; // la musique joue
       if (!essai) {
         const src = ENR[p.titre].audio + "?r=" + Date.now();
-        son.dataset.src = src; son.src = src; son.load();
+        son.dataset.src = src; son.dataset.reel = src; son.src = src; son.load();
         son.play().catch(() => {});
         veiller(p, mode, jeton, 1);
       } else if (mode === "extrait") extrait(p, nbAttaquesMesures(p, 4)).catch(() => {});
@@ -182,6 +205,7 @@
   async function jouerEnregistrement(p, mode) {
     arreter();
     chargerSon(ENR[p.titre].audio);
+    son.muted = false;
     if (son.currentTime) son.currentTime = 0;
     son.volume = 1;
     Object.assign(lecteur, { piece: p, mode, source: "audio", duree: 0, joue: true, pause: false });
@@ -787,7 +811,8 @@
       son.dataset.ouvert = "1";
       son.muted = true;
       chargerSon(ENR[PIECES.find((p) => ENR[p.titre]).titre].audio);
-      son.play().then(() => { son.pause(); son.muted = false; }).catch(() => { son.muted = false; });
+      // (ne jamais couper ici un morceau que le jeu aurait lancé entre-temps)
+      son.play().then(() => { if (!(lecteur.joue && lecteur.source === "audio")) son.pause(); son.muted = false; }).catch(() => { son.muted = false; });
     }
     try { await pretAudio(); } catch (e) { return; }
     await fondre(200);
@@ -868,6 +893,9 @@
     majEnjeu();
     sonner();
     // on prépare tout de suite ce que la bonne réponse déclenchera : l'enregistrement et la partition
+    const aVenir = run.file.slice(run.i, run.i + 3).filter((x) => ENR[x.titre]).map((x) => ENR[x.titre].audio); // ce morceau et les deux suivants
+    liberer(aVenir);
+    aVenir.forEach(precharger);
     if (ENR[p.titre]) chargerSon(ENR[p.titre].audio);
     chargerPartition(p.id).catch(() => {});
   }
