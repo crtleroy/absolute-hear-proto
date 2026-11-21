@@ -664,3 +664,22 @@ p { margin: 0; }
 /* ================= victoire : score clair et net, la couleur reste aux ondes ================= */
 .fin.bilan.reussie .score-fin b { background: none; -webkit-background-clip: border-box; background-clip: border-box; color: #fff7e6; filter: none; text-shadow: 0 0 10px #0f0e14, 0 2px 24px #0f0e14, 0 0 40px #0f0e14; }
 .fin.bilan.reussie .score-fin small { color: #d9d3e3; }
+
+/* ================= la zone du pouce =================
+   Tout ce qu'on touche à chaque tour (réponses, clavier, Continuer, Jouer) occupe la même zone, juste au-dessus du menu,
+   qui reste toujours visible. Les aides (réécouter, +1 note, le début) sont au-dessus, hors du trajet du pouce. */
+:root { --zone: 178px; --pouce: 84px; }
+.partie { padding-bottom: 0; }
+.commandes { padding: 4px 0 14px; }
+.reponses { height: var(--zone); padding: 0; grid-auto-rows: 1fr; }
+.reponses button.option, .reponses.deux button.option { min-height: 0; }
+.octave { height: 100%; }
+.accueil, .fin { padding-bottom: 0; }
+.bouton.pouce { flex: none; align-self: stretch; width: auto; min-height: var(--pouce); margin: auto -4px 0; border-radius: 24px; font-size: 1.2rem; }
+.fin .bouton.pouce, .fin.bilan .bouton.pouce { margin-top: auto; }
+.fin.bilan .score-fin { margin: auto 0 0; }
+/* la fiche de résultat ne recouvre plus le menu */
+.f-contenu { padding-bottom: 8px; }
+.f-contenu .bouton.pouce { background: var(--c, var(--or)); color: #14121a; }
+.f-contenu > .rond { flex: none; width: 46px; height: 46px; margin: -6px 0 14px; background: rgba(255, 255, 255, .12); color: #fff; }
+.grand-clavier.fiche { margin-bottom: 14px; }

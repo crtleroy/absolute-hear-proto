@@ -279,6 +279,8 @@
   function aller(nom) {
     if (ecran === "jouer" && nom !== "jouer" && lecteur.mode === "extrait") arreter();
     ecran = nom;
+    if (fiche.piece && !fiche.suite) fermerFiche();
+    else if (fiche.piece) $("feuille").hidden = nom !== "jouer";
     document.querySelectorAll(".ecran").forEach((e) => e.classList.toggle("actif", e.id === "ecran-" + nom));
     document.querySelectorAll(".onglets button").forEach((b) => b.classList.toggle("actif", b.dataset.ecran === nom));
     if (nom === "liste") rendreListe();
@@ -920,9 +922,9 @@
     if (!juste) { bouton.classList.add("faux"); return conclure(false); }
     q.gain = valeur();
     q.phase = "note";
-    q.t0 = performance.now() + 450; // le chrono de la note repart quand ses réponses s'affichent
+    q.t0 = performance.now() + 250; // le chrono de la note repart quand ses réponses s'affichent
     majEnjeu();
-    setTimeout(rendreReponses, 450);
+    setTimeout(rendreReponses, 250);
   }
   function repondreNote(choix, el) {
     if (q.fini) return;
@@ -930,7 +932,8 @@
     // on entend la note qu'on vient de choisir, à l'octave la plus proche de la vraie
     const midi = p.midis[0] + ((choix - pc(p) + 18) % 12) - 6;
     arreter();
-    if (piano) piano.triggerAttackRelease(Tone.Frequency(midi, "midi").toFrequency(), 1.3, undefined, 0.8);
+    // bonne note : on ne la rejoue pas, la musique part aussitôt et c'est son début qu'on entend
+    if (!juste && piano) piano.triggerAttackRelease(Tone.Frequency(midi, "midi").toFrequency(), 1.3, undefined, 0.8);
     const zone = $("reponses");
     zone.style.setProperty("--c", couleur(p));
     if (el.classList.contains("option")) {
@@ -940,10 +943,10 @@
       zone.querySelectorAll(`[data-pc="${pc(p)}"]`).forEach((t) => t.classList.add("cible"));
       if (!juste) el.classList.add("erreur");
     }
-    if (q.T === DERNIER) { q.gain = juste ? pts : 0; return conclure(juste, 250); }
+    if (q.T === DERNIER) { q.gain = juste ? pts : 0; return conclure(juste, juste ? 0 : 250); }
     q.bonus = juste ? pts : 0;
     q.noteJuste = juste;
-    conclure(true, 250);
+    conclure(true, juste ? 0 : 250);
   }
   function conclure(juste, delai = 250) { // delai : attente avant la fiche de résultat
     q.fini = true;
@@ -966,7 +969,8 @@
     document.dispatchEvent(new CustomEvent("ah:reponse", { detail: { juste, palier: avant, temps: (performance.now() - q.debut) / 1000 } }));
     const parts = !juste ? [] : seule ? [] : [{ txt: `morceau +${q.gain}` }, q.noteJuste ? { txt: `note +${q.bonus}` } : { txt: "note", non: true }];
     const resultat = { juste, gain, parts, avant, apres, acquis: juste && seule };
-    setTimeout(() => { apercu(p).catch(() => {}); ouvrirFiche(p, resultat, suivante); }, delai);
+    const reveler = () => { apercu(p).catch(() => {}); ouvrirFiche(p, resultat, suivante); };
+    if (delai) setTimeout(reveler, delai); else reveler();
   }
   /* Entre deux morceaux : fondu, silence, puis la note suivante. */
   let enTransition = false;
@@ -974,10 +978,10 @@
     if (enTransition) return;
     enTransition = true;
     $("partie").classList.add("entracte");
-    await fondre(350);
+    await fondre(250);
     run.i++;
     // avant un nouveau morceau : on « nettoie l'oreille », pour ne pas deviner la note par comparaison avec la précédente
-    if (run.vies > 0 && run.i < run.file.length) { $("feuille").hidden = true; await rincer(); await attendre(450); } else await attendre(ENTRACTE);
+    if (run.vies > 0 && run.i < run.file.length) { $("feuille").hidden = true; await rincer(); await attendre(200); } else await attendre(ENTRACTE);
     enTransition = false;
     if (run.vies <= 0) finir(false);
     else if (run.i >= run.file.length) finir(true);
@@ -1041,7 +1045,8 @@
   /* ---------- mises à jour d'affichage ---------- */
   function majLecture() {
     const p = lecteur.piece;
-    const visible = !!p && lecteur.mode === "ecoute" && lecteur.joue;
+    // sur l'écran de fin, pas de mini-lecteur : il décalerait « Continuer » hors de la zone du pouce
+    const visible = !!p && lecteur.mode === "ecoute" && lecteur.joue && !(ecran === "jouer" && !$("fin").hidden);
     $("mini").hidden = !visible;
     if (visible) {
       $("mini-titre").textContent = p.titre;

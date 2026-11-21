@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="First Note">
-<link rel="stylesheet" href="style.css?v=50">
+<link rel="stylesheet" href="style.css?v=51">
 </head>
 <body>
 <div id="app">
@@ -34,7 +34,7 @@
           <i></i>
           <div><small>morceaux</small><b><span id="acc-liste">2</span><em id="acc-total"></em></b></div>
         </div>
-        <button id="lancer" class="bouton plein grand">Jouer</button>
+        <button id="lancer" class="bouton plein grand pouce">Jouer</button>
       </div>
 
       <div id="partie" class="partie" hidden>
@@ -46,7 +46,6 @@
           <div id="jauge" class="jauge"></div>
           <p id="enjeu" class="enjeu"></p>
         </div>
-        <div id="reponses" class="reponses"></div>
         <div class="commandes">
           <button id="plus" class="cote"><b>+1</b><small>note</small></button>
           <button id="orbe" class="orbe" aria-label="Écouter la note">
@@ -55,6 +54,7 @@
           </button>
           <button id="aide-ecoute" class="cote"><b>♪♪♪</b><small>le début</small></button>
         </div>
+        <div id="reponses" class="reponses"></div>
       </div>
 
       <canvas id="rincage" class="rincage" hidden aria-hidden="true"></canvas>
@@ -72,7 +72,7 @@
           <small id="fin-comp"></small>
         </div>
         <div class="score-fin"><p id="fin-record" class="record" hidden>Nouveau record</p><b id="fin-score">0</b><small>points</small></div>
-        <button id="rejouer" class="bouton plein grand">Continuer</button>
+        <button id="rejouer" class="bouton plein grand pouce">Continuer</button>
       </div>
     </section>
 
@@ -90,6 +90,28 @@
       </div>
       <div id="pl-liste" class="liste"></div>
     </section>
+
+    <div id="feuille" class="feuille" hidden>
+      <div id="feuille-fond" class="feuille-fond"></div>
+      <div class="feuille-panneau">
+        <div id="f-partition" class="partition-fond" aria-hidden="true"></div>
+        <div class="f-contenu">
+          <div id="f-resultat" class="f-resultat">
+            <p id="f-points" class="f-points"></p>
+            <p id="f-detail" class="f-detail"></p>
+            <span id="f-pips" class="pips"></span>
+          </div>
+          <button id="f-pastille" class="medaillon moyen" aria-label="Écouter la note"></button>
+          <p id="f-note" class="fin-touche"></p>
+          <h2 id="f-titre"></h2>
+          <p id="f-comp" class="f-comp"></p>
+          <button id="f-lecture" class="rond discret" aria-label="Lecture ou pause"></button>
+          <div id="f-clavier" class="grand-clavier fiche"></div>
+          <p id="f-credit" class="credit"></p>
+          <button id="f-suite" class="bouton plein grand pouce">Continuer</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div id="mini" class="mini" hidden>
@@ -119,39 +141,15 @@
     </button>
   </nav>
 
-  <div id="feuille" class="feuille" hidden>
-    <div id="feuille-fond" class="feuille-fond"></div>
-    <div class="feuille-panneau">
-      <div id="f-partition" class="partition-fond" aria-hidden="true"></div>
-      <div class="f-contenu">
-        <div id="f-resultat" class="f-resultat">
-          <p id="f-points" class="f-points"></p>
-          <p id="f-detail" class="f-detail"></p>
-          <span id="f-pips" class="pips"></span>
-        </div>
-        <button id="f-pastille" class="medaillon moyen" aria-label="Écouter la note"></button>
-        <p id="f-note" class="fin-touche"></p>
-        <h2 id="f-titre"></h2>
-        <p id="f-comp" class="f-comp"></p>
-        <div id="f-clavier" class="grand-clavier fiche"></div>
-        <p id="f-credit" class="credit"></p>
-        <div class="f-actions">
-          <button id="f-lecture" class="rond discret" aria-label="Lecture ou pause"></button>
-          <button id="f-suite" class="bouton plein">Continuer</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <div id="toast" class="toast"></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.8.9/build/opensheetmusicdisplay.min.js"></script>
-<script src="data/enregistrements.js?v=50"></script>
-<script src="data/enregistrements-prive.js?v=50"></script>
-<script src="data/pieces.js?v=50"></script>
-<script src="app.js?v=50"></script>
-<script src="plus.js?v=50"></script>
+<script src="data/enregistrements.js?v=51"></script>
+<script src="data/enregistrements-prive.js?v=51"></script>
+<script src="data/pieces.js?v=51"></script>
+<script src="app.js?v=51"></script>
+<script src="plus.js?v=51"></script>
 </body>
 </html>
