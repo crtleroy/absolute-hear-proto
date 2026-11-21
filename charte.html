@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f0e14">
+<title>First Note : charte</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root { --encre: #0f0e14; --fond: #16141d; --trait: rgba(255, 255, 255, .12); --texte: #f3efe6; --discret: #a7a1b2; --or: #e9c27a; --or-fonce: #1f1808; --titre: "Fraunces", Georgia, serif; }
+* { box-sizing: border-box; }
+body { margin: 0; background: radial-gradient(120% 40% at 50% 0, #1d1a29, var(--encre) 70%) fixed, var(--encre); color: var(--texte); font: 15px/1.45 "Inter", system-ui, sans-serif; }
+main { max-width: 430px; margin: 0 auto; padding: 26px 20px 60px; }
+h1 { font-family: var(--titre); font-size: 1.9rem; margin: 0 0 22px; }
+h2 { font-family: var(--titre); font-size: 1.3rem; margin: 34px 0 4px; }
+.note { color: var(--discret); font-size: .86rem; margin: 0 0 14px; }
+.ligne { padding: 14px 0; border-top: 1px solid var(--trait); }
+.ligne small { display: block; color: var(--discret); font-size: .74rem; margin-top: 6px; }
+.or { background: linear-gradient(180deg, #fff3d6, var(--or)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.alphabet { font-size: 1.05rem; color: var(--discret); word-break: break-all; }
+.pastilles { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+.pastilles div { border-radius: 14px; padding: 16px 0 8px; text-align: center; color: #14121a; font-family: var(--titre); font-weight: 600; }
+.pastilles small { display: block; font: 500 .58rem "Inter", sans-serif; opacity: .75; }
+.teintes { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.teintes div { border-radius: 14px; padding: 14px; border: 1px solid var(--trait); font-size: .8rem; }
+.teintes b { display: block; font-weight: 600; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Charte</h1>
+
+  <h2>Les polices</h2>
+  <p class="note">Deux polices, toutes deux libres (Google Fonts, licence OFL).</p>
+
+  <div class="ligne"><p style="font-family: var(--titre); font-weight: 600; font-size: 2.2rem; line-height: 1.1">Fraunces</p>
+    <p class="alphabet" style="font-family: var(--titre)">AaBbCcDdEeÉéFfGg 0123456789 ♭ ♯ n° %</p>
+    <small>Serif à empattements doux. Tout ce qui se lit comme un titre : chiffres, titres d'écran, titres de morceaux, noms de notes.</small></div>
+  <div class="ligne"><p style="font-weight: 600; font-size: 2.2rem; line-height: 1.1">Inter</p>
+    <p class="alphabet">AaBbCcDdEeÉéFfGg 0123456789 ♭ ♯ n° %</p>
+    <small>Sans empattement. Tout le reste : compositeurs, étiquettes, menu, textes courants.</small></div>
+
+  <h2>Fraunces, en situation</h2>
+  <div class="ligne"><p class="or" style="font-family: var(--titre); font-weight: 600; font-size: 5.4rem; line-height: 1">37<span style="font-size: 1.6rem">%</span></p><small>Le grand chiffre de l'accueil · 600 · 8,4 rem · dégradé crème vers or</small></div>
+  <div class="ligne"><p style="font-family: var(--titre); font-weight: 600; font-size: 2.4rem; line-height: 1.1">Partie réussie</p><small>Titre de fin de partie · 600 · 2,4 rem</small></div>
+  <div class="ligne"><p class="or" style="font-family: var(--titre); font-weight: 600; font-size: 2.1rem; line-height: 1.05">1240</p><small>Record, nombre de morceaux · 600 · 2,1 rem · or</small></div>
+  <div class="ligne"><p style="font-family: var(--titre); font-weight: 600; font-size: 1.8rem; line-height: 1.1">Gymnopédie n°1</p><small>Titre du morceau sur l'écran de résultat · 600 · 1,8 rem · teinté à la couleur de la note</small></div>
+  <div class="ligne"><p style="font-family: var(--titre); font-size: 1.6rem; line-height: 1.2">Quel morceau ?</p><small>La question · 400 · 1,6 rem</small></div>
+  <div class="ligne"><p style="font-family: var(--titre); font-weight: 600; font-size: 1.12rem">Nocturne op. 9 n°2</p><small>Une réponse · 600 · 1,12 rem</small></div>
+  <div class="ligne"><p style="font-family: var(--titre); font-weight: 600; font-size: 2.6rem">si♭</p><small>Nom de note dans le médaillon · 600 · 2,6 rem</small></div>
+
+  <h2>Inter, en situation</h2>
+  <div class="ligne"><p style="font-size: .72rem; letter-spacing: .16em; text-transform: uppercase; color: var(--or); font-weight: 600">First Note</p><small>Surtitre · 600 · 0,72 rem · capitales espacées de 0,16 em · or</small></div>
+  <div class="ligne"><p style="font-size: .78rem; letter-spacing: .22em; text-transform: uppercase; color: var(--discret)">oreille absolue</p><small>Étiquette · 400 · 0,68 à 0,78 rem · capitales espacées de 0,22 em · gris</small></div>
+  <div class="ligne"><p>Frédéric Chopin</p><small>Texte courant, compositeur · 400 · 15 px</small></div>
+  <div class="ligne"><p style="font-weight: 600; font-size: 1.2rem">Continuer</p><small>Bouton · 600 · 1,2 rem</small></div>
+  <div class="ligne"><p style="font-weight: 500; font-size: .68rem; color: var(--or)">Jouer &nbsp; <span style="color: var(--discret)">Playlist &nbsp; Classement &nbsp; Profil</span></p><small>Menu · 500 · 0,68 rem</small></div>
+
+  <h2>Les couleurs des notes</h2>
+  <p class="note">Douze teintes à 30° d'écart, saturation 85 %, luminosité 62 %. Do est rouge.</p>
+  <div id="notes" class="pastilles"></div>
+
+  <h2>Le fond et l'or</h2>
+  <div class="teintes">
+    <div style="background: #0f0e14"><b>Encre</b>#0f0e14</div>
+    <div style="background: #16141d"><b>Fond</b>#16141d</div>
+    <div style="background: #e9c27a; color: #1f1808"><b>Or</b>#e9c27a</div>
+    <div style="background: #fff3d6; color: #1f1808"><b>Crème</b>#fff3d6</div>
+    <div style="color: #f3efe6"><b>Texte</b>#f3efe6</div>
+    <div style="color: #a7a1b2"><b>Discret</b>#a7a1b2</div>
+  </div>
+</main>
+<script>
+const NOMS = ["do", "do♯", "ré", "mi♭", "mi", "fa", "fa♯", "sol", "la♭", "la", "si♭", "si"];
+document.getElementById("notes").innerHTML = NOMS.map((n, i) => {
+  const h = i * 30, s = 0.85, l = 0.62, a = s * Math.min(l, 1 - l);
+  const f = (k0) => { const k = (k0 + h / 30) % 12; return Math.round(255 * (l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)))).toString(16).padStart(2, "0"); };
+  const c = "#" + f(0) + f(8) + f(4);
+  return `<div style="background:${c}">${n}<small>${c}</small></div>`;
+}).join("");
+</script>
+</body>
+</html>
